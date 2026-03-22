@@ -1,22 +1,15 @@
 <?php
-//header("Access-Control-Allow-Origin: *");
-//header("Access-Control-Allow-Methods: POST, OPTIONS");
-//header("Access-Control-Allow-Headers: Content-Type, Authorization");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
-//if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-   /// http_response_code(200);
-   // exit();
-//}
-
-
-
-$file = __DIR__ . '/../../SECURE/db.php';
-
-if (!file_exists($file)) {
-    die(json_encode(["error" => "db.php not found"]));
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+   http_response_code(200);
+    exit();
 }
 
-require_once $file;
+
+
 
 
 $token = $_GET['token'] ?? '';
