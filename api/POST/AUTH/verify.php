@@ -48,73 +48,132 @@ if ($result && $result->num_rows === 1) {
     $claim->execute();
     ?>
 
-    <!DOCTYPE html>
+        <!DOCTYPE html>
     <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Verification Success | Artisan Grills</title>
       <link href="https://fonts.googleapis.com/css2?family=Sacramento&display=swap" rel="stylesheet">
-
       <style>
-        * { margin:0; padding:0; box-sizing:border-box; }
-
+        * { margin:0; padding:0; box-sizing: border-box; }
         body {
-          font-family: Arial, sans-serif;
-          background: #fff8f0;
-          display:flex;
-          justify-content:center;
-          align-items:center;
-          height:100vh;
-          color:#333;
+            font-family: Arial, sans-serif;
+            background: #fff8f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+
+        /* Floating steam bubbles */
+        .steam {
+            position: absolute;
+            border-radius: 50%;
+            opacity: 0.15;
+            background: radial-gradient(circle, #FFDAB9 0%, transparent 70%);
+            animation: float 10s linear infinite;
+        }
+        .steam:nth-child(1){ width: 150px; height: 150px; left: 10%; top: 60%; animation-duration: 12s; }
+        .steam:nth-child(2){ width: 100px; height: 100px; left: 70%; top: 50%; animation-duration: 8s; }
+        .steam:nth-child(3){ width: 120px; height: 120px; left: 40%; top: 70%; animation-duration: 14s; }
+
+        @keyframes float {
+            0% { transform: translateY(0) translateX(0) rotate(0deg); }
+            50% { transform: translateY(-50px) translateX(20px) rotate(45deg); }
+            100% { transform: translateY(0) translateX(0) rotate(0deg); }
         }
 
         .container {
-          background:#fff;
-          padding:40px;
-          border-radius:20px;
-          text-align:center;
-          box-shadow:0 8px 25px rgba(0,0,0,0.2);
-          width:90%;
-          max-width:500px;
+            background: #ffffff;
+            padding: 40px 30px;
+            border-radius: 20px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 2;
+            text-align: center;
         }
-
         .header {
-          font-family:'Sacramento', cursive;
-          font-size:48px;
-          color:#A0522D;
-          margin-bottom:20px;
+            font-family: 'Sacramento', cursive;
+            font-size: 48px;
+            color: #A0522D;
+            margin-bottom: 20px;
         }
-
         .message {
-          font-size:18px;
-          margin-bottom:20px;
+            font-size: 18px;
+            margin-bottom: 30px;
+        }
+        .login-btn {
+            display: inline-block;
+            background-color: #FF7043;
+            color: #fff;
+            text-decoration: none;
+            padding: 15px 30px;
+            border-radius: 50px;
+            font-weight: bold;
+            transition: background 0.3s ease;
+        }
+        .login-btn:hover { background-color: #E64A19; }
+
+        /* Success checkmark animation */
+        .checkmark {
+          width: 100px;
+          height: 100px;
+          border-radius: 50%;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          margin: 0 auto 20px auto;
+          background: #4CAF50;
+          animation: pop 0.5s ease-out forwards;
+        }
+        .checkmark::after {
+          content: "";
+          width: 25px;
+          height: 50px;
+          border-left: 5px solid #fff;
+          border-bottom: 5px solid #fff;
+          transform: rotate(-45deg);
+          animation: draw 0.5s ease-out forwards 0.5s;
+        }
+        @keyframes pop {
+          0% { transform: scale(0); }
+          100% { transform: scale(1); }
+        }
+        @keyframes draw {
+          0% { height: 0; width: 0; opacity: 0; }
+          100% { height: 50px; width: 25px; opacity: 1; }
         }
 
-        .btn {
-          display:inline-block;
-          padding:12px 25px;
-          background:#FF7043;
-          color:#fff;
-          border-radius:50px;
-          text-decoration:none;
+        /* Responsive */
+        @media(max-width:400px){
+          .header { font-size: 36px; }
+          .message { font-size: 16px; }
+          .login-btn { padding: 12px 25px; }
         }
       </style>
     </head>
-
     <body>
-      <div class="container">
-        <div class="header">Artisan Grills</div>
+      <!-- Steam floating animations -->
+      <div class="steam"></div>
+      <div class="steam"></div>
+      <div class="steam"></div>
 
+      <div class="container">
+        <div class="checkmark"></div>
+        <div class="header">Artisan Grills</div>
         <div class="message">
           Your email has been verified successfully!<br>
-          Please login to continue.
+          Please login on the app to view all your orders.
         </div>
-
-        <a class="btn" href="https://yourappurl.com/login">Open App</a>
+        <a href="https://yourappurl.com/login" class="login-btn">Open App</a>
       </div>
     </body>
-    </html>
+        </html>
 
     <?php
     exit();
