@@ -79,7 +79,7 @@ $to = $user['email'];
 $subject = "Your Login Verification Code";
 
 $message = "
-<h2>Artisan Grills Login Verification</h2>
+<h2>Artisanè Grilluxe Login Verification</h2>
 
 <p>Hello {$user['full_name']},</p>
 
