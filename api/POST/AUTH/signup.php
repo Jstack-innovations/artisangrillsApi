@@ -83,9 +83,10 @@ if ($stmt->execute()) {
     $subject = "Welcome to Artisan Grills! Verify Your Email";
 
     $message = '
-    <html>
+ <html>
     <head>
       <style>
+        @import url("https://fonts.googleapis.com/css2?family=Sacramento&display=swap");
         body {
             margin:0;
             padding:0;
@@ -102,15 +103,48 @@ if ($stmt->execute()) {
             box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
         .header {
+            position: relative;
             background: #A0522D;
             color: white;
             text-align: center;
-            padding: 40px 20px;
-            font-size: 30px;
+            padding: 40px 20px 20px 20px;
+            font-family: "Sacramento", cursive;
+            font-size: 36px;
+            overflow: hidden;
+        }
+        /* Smoke animation behind header text */
+        .smoke {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 100px;
+            background: url("https://jstack-sigma.vercel.app/artisangrill/smoke.png") no-repeat center;
+            background-size: contain;
+            opacity: 0.2;
+            animation: rise 6s linear infinite;
+        }
+        @keyframes rise {
+            0% { transform: translateX(-50%) translateY(20px); opacity: 0.2; }
+            50% { transform: translateX(-50%) translateY(-10px); opacity: 0.3; }
+            100% { transform: translateX(-50%) translateY(-50px); opacity: 0; }
+        }
+
+        .subheader {
+            text-align: center;
+            color: #fff8e1;
+            font-size: 16px;
+            margin-bottom: 20px;
         }
         .content {
-            padding: 20px;
+            padding: 20px 30px;
             font-size: 16px;
+            line-height: 1.5;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
         }
         .verify-button {
             background-color: #FF7043;
@@ -118,24 +152,70 @@ if ($stmt->execute()) {
             padding: 15px 30px;
             text-decoration: none;
             border-radius: 50px;
+            font-weight: bold;
             display: inline-block;
+            transition: background 0.3s ease;
+        }
+        .verify-button:hover {
+            background-color: #E64A19;
+        }
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            padding: 20px;
+        }
+        .hero-img, .food-gif {
+            display: block;
+            margin: 0 auto 15px auto;
+        }
+        .hero-img {
+            width: 100px;
+            animation: float 3s ease-in-out infinite;
+        }
+        .food-gif {
+            width: 60px;
+            animation: float 2s ease-in-out infinite alternate;
+        }
+        @keyframes float {
+          0% { transform: translatey(0px); }
+          50% { transform: translatey(-10px); }
+          100% { transform: translatey(0px); }
         }
       </style>
     </head>
     <body>
       <div class="container">
-        <div class="header">Artisan Grills</div>
+        <div class="header">
+          <div class="smoke"></div>
+          Artisan Grills
+        </div>
+        <div class="subheader">Curated Packages Just for You</div>
+
+        <!-- Hero image -->
+        <img src="https://jstack-sigma.vercel.app/artisangrill/toon-chef.png" class="hero-img" alt="Chef Hat" />
 
         <div class="content">
           <p>Hi ' . htmlspecialchars($name) . ',</p>
+          <p>Welcome to <strong>Artisan Grills</strong>! We are thrilled to have you on board.</p>
+          <p>Click the button below to verify your email and activate your account:</p>
 
-          <p>Welcome! Please verify your email:</p>
-
-          <p style="text-align:center;">
+          <div class="button-container">
             <a href="' . $verifyLink . '" class="verify-button">Verify Email</a>
-          </p>
+          </div>
 
-          <p>If you did not sign up, ignore this email.</p>
+          <p>Enjoy your dining journey! Here are some of our favorites:</p>
+          <div style="text-align:center;">
+            <img src="https://jstack-sigma.vercel.app/artisangrill/pizza.png" class="food-gif" alt="Pizza" />
+            <img src="https://jstack-sigma.vercel.app/artisangrill/burger.png" class="food-gif" alt="Burger" />
+            <img src="https://jstack-sigma.vercel.app/artisangrill/grill.png" class="food-gif" alt="Grill" />
+          </div>
+
+          <p>If you did not sign up for Artisan Grills, please ignore this email.</p>
+        </div>
+
+        <div class="footer">
+          Artisan Grills | Curated dining experiences | &copy; ' . date("Y") . '
         </div>
       </div>
     </body>
