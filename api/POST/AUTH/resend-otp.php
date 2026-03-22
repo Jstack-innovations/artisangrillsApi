@@ -1,9 +1,6 @@
 <?php
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
 
-require_once __DIR__ . "/../../vendor/autoload.php";
-$mailConfig = require __DIR__ . "/../../SECURE/mail_config.php";
+require_once __DIR__ . '/../../SECURE/gmail_mailer.php';
 
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
@@ -15,7 +12,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-
 $file = __DIR__ . '/../../SECURE/db.php';
 
 if (!file_exists($file)) {
@@ -24,15 +20,13 @@ if (!file_exists($file)) {
 
 require_once $file;
 
-
-
 $data = json_decode(file_get_contents("php://input"), true);
 
 $email = $data['email'] ?? '';
 
 if(!$email){
- echo json_encode(["success"=>false,"message"=>"Email required"]);
- exit;
+    echo json_encode(["success"=>false,"message"=>"Email required"]);
+    exit;
 }
 
 $stmt = $conn->prepare("SELECT id,email,full_name FROM users WHERE email=?");
@@ -42,8 +36,8 @@ $stmt->execute();
 $result = $stmt->get_result();
 
 if($result->num_rows !== 1){
- echo json_encode(["success"=>false,"message"=>"User not found"]);
- exit;
+    echo json_encode(["success"=>false,"message"=>"User not found"]);
+    exit;
 }
 
 $user = $result->fetch_assoc();
@@ -63,56 +57,37 @@ VALUES(?,?,?)
 $insert->bind_param("iss",$user_id,$code,$expires);
 $insert->execute();
 
-/* ===== SMTP MAIL ===== */
+/* =========================
+   GMAIL API SEND
+========================= */
 
-$mail = new PHPMailer(true);
+$to = $user['email'];
+$subject = "Login Verification Code";
 
-try {
-
-$mail->isSMTP();
-$mail->SMTPDebug = 0;
-
-$mail->Host = $mailConfig['host'];
-$mail->SMTPAuth = true;
-$mail->Username = $mailConfig['username'];
-$mail->Password = $mailConfig['password'];
-
-$mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-$mail->Port = $mailConfig['port'];
-
-$mail->SMTPOptions = [
- 'ssl'=>[
-  'verify_peer'=>false,
-  'verify_peer_name'=>false,
-  'allow_self_signed'=>true
- ]
-];
-
-$mail->setFrom(
- $mailConfig['from_email'],
- $mailConfig['from_name']
-);
-
-$mail->addAddress($user['email'], $user['full_name']);
-
-$mail->isHTML(true);
-$mail->Subject = "Login Verification Code";
-
-$mail->Body = "
+$message = "
 <h2>Artisan Grills Login Verification</h2>
+
 <p>Hello {$user['full_name']},</p>
+
 <p>Your login OTP is:</p>
-<h1 style='letter-spacing:5px'>$code</h1>
+
+<h1 style='letter-spacing:5px'>{$code}</h1>
+
 <p>Expires in 5 minutes.</p>
 ";
 
-$mail->send();
+$result = sendEmail($to, $subject, $message);
 
-} catch(Exception $e){
- error_log($e->getMessage());
+if (!$result) {
+    echo json_encode([
+        "success" => false,
+        "message" => "OTP sending failed"
+    ]);
+    exit;
 }
 
 echo json_encode([
- "success"=>true,
- "message"=>"OTP sent"
+    "success"=>true,
+    "message"=>"OTP sent"
 ]);
+?>
