@@ -1,13 +1,6 @@
 <?php
-session_start();
 
-header("Access-Control-Allow-Origin: *");
-header("Content-Type: application/json");
-
-//if (!isset($_SESSION['admin_id'])) {
-    //echo json_encode(["success"=>false,"error"//=>"Unauthorized"]);
-    //exit;
-//}
+require_once __DIR__ . "/authGuard.php";
 
 $taxFile = __DIR__ . "/../../GET/JSON/tax.json";
 
