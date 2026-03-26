@@ -36,8 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 
 /* ---- AUTH GUARD ---- */
 if (!isset($_SESSION['admin_id'])) {
-    http_response_code(401);
-    exit;
+http_response_code(401);
+echo json_encode(["error" => "Unauthorized"]);
+exit;
 }
 
 if (
@@ -47,8 +48,8 @@ if (
     session_unset();
     session_destroy();
     http_response_code(401);
-    exit;
-}
+echo json_encode(["error" => "Unauthorized"]);
+exit;
 
 $_SESSION['last_activity'] = time();
 
