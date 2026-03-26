@@ -1,7 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET");
-header("Content-Type: application/json");
+require_once __DIR__ . "/../../SECURE/authGuard.php";
 
 
 $file = __DIR__ . '/../../SECURE/db.php';
