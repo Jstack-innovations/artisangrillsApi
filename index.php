@@ -185,7 +185,7 @@ if ($uri === "/getRevenue") {
 }
 
 if ($uri === "/getHourlyRevenue") {
-    require $basePath . "/admins/GET/revenue.php";
+    require $basePath . "/admins/GET/hourlyRevenue.php";
     exit;
 }
 
