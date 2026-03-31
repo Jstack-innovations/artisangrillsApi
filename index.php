@@ -99,11 +99,6 @@ if ($uri === "/signUp") {
     exit;
 }
 
-if ($uri === "/session") {
-    require $basePath . "/POST/AUTH/session_validate.php";
-    exit;
-}
-
 if ($uri === "/verifyLogin") {
     require $basePath . "/POST/AUTH/verify-login.php";
     exit;
@@ -123,8 +118,8 @@ if ($uri === "/flutterwave") {
     exit;
 }
 
-if ($uri === "/mail") {
-    require $basePath . "/SECURE/mail_config.php";
+if ($uri === "/sendReport") {
+    require $basePath . "/SECURE/whatsappApi/sendReport.php";
     exit;
 }
 
