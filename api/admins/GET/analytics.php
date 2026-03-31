@@ -25,21 +25,15 @@ foreach ($menuJson as $category) {
     }
 }
 
-/* ===== FETCH ORDERS + ITEMS ===== */
+/* ===== FETCH ORDERS + ITEMS (NO CLIENT DETAILS) ===== */
 $sqlOrders = "
 SELECT 
     o.id AS order_id,
-    o.user_id,
-    o.name,
-    o.phone,
     o.table_no,
     o.order_type,
     o.total_amount,
-    o.payment_ref,
     o.created_at,
     o.status,
-    o.full_address,
-    o.pickup_time,
     o.plate_order_no,
     o.order_status,
     i.id AS order_item_id,
@@ -59,14 +53,29 @@ $totalPlaced = $totalServed = $totalDelivered = $totalPickup = $totalRevenue = 0
 
 while ($row = $res->fetch_assoc()) {
     $id = $row['order_id'];
+
     if (!isset($orders[$id])) {
-        $orders[$id] = ["info" => $row, "items" => []];
+        $orders[$id] = [
+            "info" => [
+                "order_id" => $row['order_id'],
+                "table_no" => $row['table_no'],
+                "order_type" => $row['order_type'],
+                "total_amount" => $row['total_amount'],
+                "created_at" => $row['created_at'],
+                "status" => $row['status'],
+                "plate_order_no" => $row['plate_order_no'],
+                "order_status" => $row['order_status']
+            ],
+            "items" => []
+        ];
+
         $totalPlaced++;
         if ($row['order_status'] === "Served") $totalServed++;
         if ($row['order_status'] === "Delivered") $totalDelivered++;
         if ($row['order_type'] === "pickup") $totalPickup++;
         $totalRevenue += floatval($row['total_amount']);
     }
+
     if ($row['menu_name']) {
         $orders[$id]['items'][] = [
             "name" => $row['menu_name'],
@@ -74,7 +83,6 @@ while ($row = $res->fetch_assoc()) {
             "qty" => $row['quantity'],
             "image" => $menuImages[$row['menu_id']] ?? "images/default.jpg",
             "menu_id" => $row['menu_id'],
-            "paid_order_id" => $row['paid_order_id'],
             "order_item_id" => $row['order_item_id']
         ];
     }
@@ -86,6 +94,7 @@ for ($i = 6; $i >= 0; $i--) {
     $date = date('Y-m-d', strtotime("-$i days"));
     $dailyRevenue[$date] = 0;
 }
+
 $sqlDaily = "
 SELECT DATE(created_at) as order_date, SUM(total_amount) as total
 FROM paid_orders
@@ -93,9 +102,11 @@ WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
 GROUP BY DATE(created_at)
 ";
 $resDaily = $conn->query($sqlDaily);
+
 while ($row = $resDaily->fetch_assoc()) {
     $dailyRevenue[$row['order_date']] = floatval($row['total']);
 }
+
 $dailyRevenueOutput = [];
 foreach ($dailyRevenue as $date => $total) {
     $dayName = date('D', strtotime($date));
@@ -104,6 +115,7 @@ foreach ($dailyRevenue as $date => $total) {
 
 /* ===== HOURLY REVENUE - TODAY ===== */
 $hourlyRevenue = array_fill(0, 24, 0);
+
 $sqlHourly = "
 SELECT HOUR(created_at) as order_hour, SUM(total_amount) as total
 FROM paid_orders
@@ -111,10 +123,12 @@ WHERE DATE(created_at) = CURDATE()
 GROUP BY HOUR(created_at)
 ";
 $resHourly = $conn->query($sqlHourly);
+
 while ($row = $resHourly->fetch_assoc()) {
     $hour = intval($row['order_hour']);
     $hourlyRevenue[$hour] = floatval($row['total']);
 }
+
 $hourlyRevenueOutput = [];
 foreach ($hourlyRevenue as $hour => $total) {
     $hourFormatted = date("gA", strtotime("$hour:00"));
