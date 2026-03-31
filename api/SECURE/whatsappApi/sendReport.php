@@ -5,34 +5,60 @@ header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
 require __DIR__ . '/vendor/autoload.php';
-
 use Twilio\Rest\Client;
 
-$sid = "ACc9ad391bff43d4ce8463574671ab1be5";
+// ===== Twilio Credentials =====
+$sid = "ACc9ad391bff43d4ce8463574671abbe5";
 $token = "9eed46d720ded0519127b7e28dcf38ea";
+$fromWhatsapp = "whatsapp:+14155238886";
+$toWhatsapp = "whatsapp:+2347089913116";
 
 $client = new Client($sid, $token);
 
-$grossRevenue = 1250000;
-$estimatedCost = 812500;
-$estimatedProfit = 437500;
-$profitMargin = 35;
+// ===== DB Connection =====
+$file = __DIR__ . '/../SECURE/db.php';
+if (!file_exists($file)) die(json_encode(["error" => "db.php not found"]));
+require_once $file; // should provide $conn (PDO or mysqli)
 
-$message = "📊 Artisanè Grilluxxè Daily Business Report
+// ===== Parameters =====
+$costPercentage = 0.65; // same as your dashboard
 
-💰 Gross Revenue: ₦" . number_format($grossRevenue) . "
-📉 Estimated Cost: ₦" . number_format($estimatedCost) . "
-📈 Estimated Profit: ₦" . number_format($estimatedProfit) . "
-📊 Profit Margin: {$profitMargin}%
+try {
+    // Fetch today’s paid orders
+    $stmt = $conn->prepare("
+        SELECT SUM(total_amount) AS grossRevenue
+        FROM paid_orders
+        WHERE status = 'paid' AND DATE(created_at) = CURDATE()
+    ");
+    $stmt->execute();
+    $data = $stmt->fetch(PDO::FETCH_ASSOC);
 
-Generated automatically.";
+    $grossRevenue = $data['grossRevenue'] ?? 0;
+    $estimatedCost = $grossRevenue * $costPercentage;
+    $estimatedProfit = $grossRevenue - $estimatedCost;
+    $profitMargin = $grossRevenue ? round(($estimatedProfit / $grossRevenue) * 100) : 0;
 
-$client->messages->create(
-    "whatsapp:+2347089913116",
-    [
-        "from" => "whatsapp:+14155238886",
-        "body" => $message
-    ]
-);
+    // Build message
+    $message = "📊 Artisanè Grilluxxè Daily Business Report\n\n";
+    $message .= "💰 Gross Revenue: ₦" . number_format($grossRevenue) . "\n";
+    $message .= "📉 Estimated Cost: ₦" . number_format($estimatedCost) . "\n";
+    $message .= "📈 Estimated Profit: ₦" . number_format($estimatedProfit) . "\n";
+    $message .= "📊 Profit Margin: {$profitMargin}%\n\n";
+    $message .= "Generated automatically.";
 
-echo "Report sent successfully!";
+    // Send WhatsApp
+    $client->messages->create(
+        $toWhatsapp,
+        [
+            "from" => $fromWhatsapp,
+            "body" => $message
+        ]
+    );
+
+    echo "Report sent successfully!";
+
+} catch (PDOException $e) {
+    echo "DB Error: " . $e->getMessage();
+} catch (Exception $e) {
+    echo "Twilio Error: " . $e->getMessage();
+}
