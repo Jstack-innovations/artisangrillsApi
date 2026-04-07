@@ -53,6 +53,42 @@ if (!$secretKey) {
 
 
 
+
+$curl = curl_init();
+
+curl_setopt_array($curl, array(
+  CURLOPT_URL => "https://api.flutterwave.com/v3/transactions/$ref/verify",
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_CUSTOMREQUEST => "GET",
+  CURLOPT_HTTPHEADER => array(
+    "Authorization: Bearer $secretKey",
+    "Content-Type: application/json"
+  ),
+));
+
+$response = curl_exec($curl);
+curl_close($curl);
+
+$result = json_decode($response, true);
+
+if (
+    $result['status'] !== 'success' ||
+    $result['data']['status'] !== 'successful'
+) {
+    echo json_encode(["status"=>"error","message"=>"Payment not verified"]);
+    exit;
+}
+
+/* Optional: check amount matches */
+if ((float)$result['data']['amount'] !== (float)$total) {
+    echo json_encode(["status"=>"error","message"=>"Amount mismatch"]);
+    exit;
+}
+
+
+
+
+
 /* ===== SESSION TOKEN (IF USER IS LOGGED IN) ===== */
 $sessionToken = $data['session_token'] ?? null;
 $user_id = null;
