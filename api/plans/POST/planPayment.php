@@ -31,18 +31,29 @@ if (!$tx_id || !$email || !$amount) {
     exit;
 }
 
+
+
 #################################################
 # 🔐 FETCH SECRET KEY FROM flutterwave-key.php
 #################################################
 
-$keyResponse = file_get_contents(__DIR__ . '/../../SECURE/flutterwave-key.php');
-$keyData = json_decode($keyResponse, true);
+ob_start();
+include __DIR__ . '/../../SECURE/flutterwave-key.php';
+$keyOutput = ob_get_clean();
+
+$keyData = json_decode($keyOutput, true);
 
 $secretKey = $keyData['secretKey'] ?? '';
+
 if (!$secretKey) {
-    echo json_encode(["status"=>"error","message"=>"Secret key not found"]);
+    echo json_encode([
+        "status"=>"error",
+        "message"=>"Secret key not found"
+    ]);
     exit;
 }
+
+
 
 #################################################
 # 🔐 VERIFY WITH FLUTTERWAVE SECRET KEY
