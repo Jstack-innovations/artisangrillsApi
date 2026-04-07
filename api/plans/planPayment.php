@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-require_once __DIR__ . '/../SECURE/db.php';
+require_once __DIR__ . '/../../SECURE/db.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 
@@ -35,7 +35,7 @@ if (!$tx_id || !$email || !$amount) {
 # 🔐 FETCH SECRET KEY FROM flutterwave-key.php
 #################################################
 
-$keyResponse = file_get_contents(__DIR__ . '/../SECURE/flutterwave-key.php');
+$keyResponse = file_get_contents(__DIR__ . '/../../SECURE/flutterwave-key.php');
 $keyData = json_decode($keyResponse, true);
 
 $secretKey = $keyData['secretKey'] ?? '';
