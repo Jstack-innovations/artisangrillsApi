@@ -9,20 +9,25 @@ function sendEmail($to, $subject, $body) {
     $client = new Client();
     $client->setAuthConfig(__DIR__ . '/credentials.json');
     $client->addScope(Gmail::GMAIL_SEND);
+    $client->setAccessType('offline'); // important for refresh token
 
     $tokenPath = __DIR__ . '/token.json';
 
+    // Load existing token
     if (file_exists($tokenPath)) {
         $client->setAccessToken(json_decode(file_get_contents($tokenPath), true));
     }
 
-    // ✅ HANDLE TOKEN EXPIRY
+    // ✅ Auto-refresh access token if expired
     if ($client->isAccessTokenExpired()) {
         if ($client->getRefreshToken()) {
-            $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+            $newToken = $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
+            $client->setAccessToken($newToken);
+            // Save refreshed token
             file_put_contents($tokenPath, json_encode($client->getAccessToken()));
         } else {
-            throw new Exception("Gmail token expired. Re-authentication required.");
+            // In production, we should never hit this
+            throw new Exception("Refresh token missing, reauthorize app manually.");
         }
     }
 
