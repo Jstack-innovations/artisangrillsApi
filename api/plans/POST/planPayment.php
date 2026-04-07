@@ -93,21 +93,41 @@ if ((float)$result['data']['amount'] !== (float)$amount) {
     exit;
 }
 
+
+
+#################################################
+# 🔑 GENERATE 21 DIGIT SUBSCRIPTION CODE
+#################################################
+
+function generateSubscriptionCode($length = 21) {
+    $characters = '0123456789';
+    $code = '';
+    for ($i = 0; $i < $length; $i++) {
+        $code .= $characters[random_int(0, strlen($characters) - 1)];
+    }
+    return $code;
+}
+
+$subscriptionCode = generateSubscriptionCode();
+
+
+
+
 #################################################
 # 💾 INSERT INTO DATABASE
 #################################################
 
 $stmt = $conn->prepare("
     INSERT INTO subscriptions
-    (fullname, username, email, phone, country, dob, gender,
-     business_type, business_name, plan, amount, transaction_id, status)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+(fullname, username, email, phone, country, dob, gender,
+ business_type, business_name, plan, amount, transaction_id, subscription_code, status)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
 
 $status = "active";
 
 $stmt->bind_param(
-    "ssssssssssdss",
+    "ssssssssssdsss",
     $fullname,
     $username,
     $email,
@@ -125,4 +145,7 @@ $stmt->bind_param(
 
 $stmt->execute();
 
-echo json_encode(["status"=>"success"]);
+echo json_encode([
+    "status"=>"success",
+    "subscription_code"=>$subscriptionCode
+]);
