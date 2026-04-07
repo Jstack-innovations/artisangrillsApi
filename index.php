@@ -258,6 +258,12 @@ if ($uri === "/adminDeleteUser") {
     exit;
 }
 
+/* SUBSCRIPTION PLAN ROUTES */
+if ($uri === "/subPlans") {
+    require $basePath . "/plans/POST/planPayment.php";
+    exit;
+}
+
 
 
 
