@@ -109,6 +109,11 @@ if ($uri === "/verify") {
     exit;
 }
 
+if ($uri === "/session") {
+    require $basePath . "/POST/AUTH/session_validate.php";
+    exit;
+}
+
 
 /* PUT ROUTES */
 
