@@ -38,9 +38,9 @@ try {
 
     // Build message
     $message = "📊 Artisanè Grilluxxè Daily Business Report\n\n";
-    $message .= "💰 Gross Revenue: ₦" . number_format($grossRevenue) . "\n";
-    $message .= "📉 Estimated Cost: ₦" . number_format($estimatedCost) . "\n";
-    $message .= "📈 Estimated Profit: ₦" . number_format($estimatedProfit) . "\n";
+    $message .= "💰 Gross Revenue: $" . number_format($grossRevenue) . "\n";
+    $message .= "📉 Estimated Cost: $" . number_format($estimatedCost) . "\n";
+    $message .= "📈 Estimated Profit: $" . number_format($estimatedProfit) . "\n";
     $message .= "📊 Profit Margin: {$profitMargin}%\n\n";
     $message .= "Generated automatically.";
 
