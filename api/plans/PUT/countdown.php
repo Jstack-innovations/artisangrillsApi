@@ -1,7 +1,18 @@
 <?php
 
 // Read JSON file
-$data = json_decode(file_get_contents("../GET/plan.json"), true);
+$jsonPath = __DIR__ . "/../GET/plan.json";
+
+if (!file_exists($jsonPath)) {
+    die(json_encode([
+        "status" => "error",
+        "message" => "plan.json not found",
+        "path_checked" => $jsonPath
+    ]));
+}
+
+$data = json_decode(file_get_contents($jsonPath), true);
+
 
 $days = $data["free_trial_days"];
 $startDate = $data["start_date"];
