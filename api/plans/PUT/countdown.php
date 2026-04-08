@@ -1,5 +1,9 @@
 <?php
 
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Content-Type: application/json");
+
 // Read JSON file
 $jsonPath = __DIR__ . "/../GET/plan.json";
 
