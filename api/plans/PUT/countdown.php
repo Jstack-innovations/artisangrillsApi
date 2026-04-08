@@ -1,7 +1,7 @@
 <?php
 
 // Read JSON file
-$data = json_decode(file_get_contents("plan.json"), true);
+$data = json_decode(file_get_contents("../GET/plan.json"), true);
 
 $days = $data["free_trial_days"];
 $startDate = $data["start_date"];
