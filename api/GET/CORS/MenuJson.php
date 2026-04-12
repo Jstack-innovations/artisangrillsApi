@@ -3,14 +3,15 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Content-Type: application/json");
 
-// DB connection (EDIT THIS)
-$conn = new mysqli("localhost", "root", "", "your_database");
+// DB connection 
+$file = __DIR__ . '/../../SECURE/db.php';
 
-if ($conn->connect_error) {
-    http_response_code(500);
-    echo json_encode(["error" => "DB connection failed"]);
-    exit;
+if (!file_exists($file)) {
+    die(json_encode(["error" => "db.php not found"]));
 }
+
+require_once $file;
+
 
 // 1. Load menu JSON
 $file = __DIR__ . "/../JSON/menu.json";
