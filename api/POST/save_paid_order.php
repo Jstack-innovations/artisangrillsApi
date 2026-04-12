@@ -206,19 +206,25 @@ try {
 
     // 1️⃣ Reduce stock first
     $updateStock = $conn->prepare("
-        UPDATE menu 
-        SET stock = stock - ? 
-        WHERE id = ? AND stock >= ?
-    ");
+    UPDATE menu_stock 
+    SET stock = stock - ?, 
+        available = CASE 
+            WHEN stock - ? <= 0 THEN 0 
+            ELSE 1 
+        END
+    WHERE menu_id = ? 
+    AND stock >= ?
+");
 
-    $updateStock->bind_param(
-        "iii",
-        $item['quantity'],
-        $item['id'],
-        $item['quantity']
-    );
+$updateStock->bind_param(
+    "iiii",
+    $item['quantity'],
+    $item['quantity'],
+    $item['id'],
+    $item['quantity']
+);
 
-    $updateStock->execute();
+$updateStock->execute();
 
     if ($updateStock->affected_rows === 0) {
         throw new Exception("Not enough stock for " . $item['name']);
