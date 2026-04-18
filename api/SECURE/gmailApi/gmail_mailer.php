@@ -11,31 +11,41 @@ function sendEmail($to, $subject, $body) {
     $client->addScope(Gmail::GMAIL_SEND);
     $client->setAccessType('offline'); // important for refresh token
 
-    $tokenPath = __DIR__ . '/token.json';
+$tokenPath = __DIR__ . '/token.json';
 
-    // Load existing token
-    if (file_exists($tokenPath)) {
+if (file_exists($tokenPath)) {
 
     $token = json_decode(file_get_contents($tokenPath), true);
 
-    // 🔥 safety check
-    if (is_array($token) && isset($token['access_token'])) {
-        $client->setAccessToken($token);
-    }
+    // ✅ strict validation (VERY IMPORTANT)
+    if (!is_array($token) || empty($token['access_token'])) {
+        throw new Exception("Invalid or corrupted token.json");
     }
 
-    // ✅ Auto-refresh access token if expired
-    if ($client->isAccessTokenExpired()) {
-        if ($client->getRefreshToken()) {
-            $newToken = $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-            $client->setAccessToken($newToken);
-            // Save refreshed token
-            file_put_contents($tokenPath, json_encode($client->getAccessToken()));
-        } else {
-            // In production, we should never hit this
-            throw new Exception("Refresh token missing, reauthorize app manually.");
+    $client->setAccessToken($token);
+}
+
+// ✅ refresh safely only if token exists
+if ($client->getAccessToken() && $client->isAccessTokenExpired()) {
+
+    if ($client->getRefreshToken()) {
+
+        $newToken = $client->fetchAccessTokenWithRefreshToken(
+            $client->getRefreshToken()
+        );
+
+        if (!isset($newToken['access_token'])) {
+            throw new Exception("Refresh failed: " . json_encode($newToken));
         }
+
+        $client->setAccessToken($newToken);
+
+        file_put_contents($tokenPath, json_encode($client->getAccessToken()));
+
+    } else {
+        throw new Exception("Refresh token missing — re-auth required");
     }
+}
 
     $service = new Gmail($client);
 
