@@ -6,7 +6,7 @@ use Twilio\Rest\Client;
 
 // ===== Twilio Credentials =====
 $sid = "ACc9ad391bff43d4ce8463574671ab1be5";
-$token = "3d3e3e06c36a9bb104e0b9ab537d55c9";
+$token = "ae190a09d0bec5f0a8dbb2389baad550";
 $fromWhatsapp = "whatsapp:+14155238886";
 $toWhatsapp = "whatsapp:+2347089913116";
 
