@@ -94,14 +94,14 @@ $message = "
 
 $result = sendEmail($to, $subject, $message);
 
-/*if (!$result) {
+if (!$result) {
     echo json_encode([
         "success" => false,
         "message" => "Verification email failed. Please try again."
     ]);
     exit;
-}*/
-if ($result["status"] !== "success") {
+}
+/*if ($result["status"] !== "success") {
 
     echo json_encode([
         "success" => false,
@@ -109,7 +109,7 @@ if ($result["status"] !== "success") {
         "debug" => $result
     ]);
     exit;
-}
+}*/
 
 /* Return response */
 echo json_encode([
