@@ -89,6 +89,11 @@ if ($uri === "/confirmOrder") {
     exit;
 }
 
+if ($uri === "/createSession") {
+    require $basePath . "/POST/create-session.php";
+    exit;
+}
+
 if ($uri === "/saveOrder") {
     require $basePath . "/POST/save_paid_order.php";
     exit;
