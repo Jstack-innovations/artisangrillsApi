@@ -73,7 +73,7 @@ if ($uri === "/tracking") {
 }
 
 if ($uri === "/getSession") {
-    require $basePath . "/GET/get-session.php";
+    require $basePath . "/GET/CORS/get-session.php";
     exit;
 }
 
