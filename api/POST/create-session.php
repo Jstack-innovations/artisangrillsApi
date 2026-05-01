@@ -110,7 +110,7 @@ try {
     ");
 
     $stmt->bind_param(
-        "issssdss",
+        "isssdss",
         $user_id,
         $name,
         $phone,
