@@ -212,7 +212,7 @@ $body = "
 ";
 
 sendEmail(
-    "yourrestaurant@email.com",
+    "wsamson630@gmail.com",
     "🔥 New Table Order - Table $tableNo",
     $body
 );
