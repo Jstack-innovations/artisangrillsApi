@@ -70,6 +70,8 @@ try {
 
     $new_total = $current_total;
 
+    $emailsToSend = [];
+
     foreach ($cart as $item) {
 
         /* ===== REDUCE STOCK ===== */
@@ -130,22 +132,11 @@ try {
 
     /* ===== SEND EMAIL FOR NEW ITEM ===== */
 
-    require_once __DIR__ . '/../SECURE/gmailApi/resend_mailer.php';
-
-    $body = "
-        <h2>🔥 New Item Ordered</h2>
-        <p><b>Session:</b> $session_code</p>
-        <p><b>Table Order ID:</b> $order_id</p>
-        <p><b>Item:</b> {$item['name']}</p>
-        <p><b>Qty:</b> {$item['quantity']}</p>
-        <p><b>Price:</b> {$item['price']}</p>
-    ";
-
-    sendEmail(
-        "yourrestaurant@email.com",
-        "New Order Item - {$item['name']}",
-        $body
-    );
+    $emailsToSend[] = [
+    "name" => $item['name'],
+    "qty" => $item['quantity'],
+    "price" => $item['price']
+];
         }
 
         $new_total += ($item['price'] * $item['quantity']);
@@ -162,6 +153,28 @@ try {
     $updateTotal->execute();
 
     $conn->commit();
+
+
+    require_once __DIR__ . '/../SECURE/gmailApi/resend_mailer.php';
+
+foreach ($emailsToSend as $item) {
+
+    $body = "
+        <h2>🔥 New Item Ordered</h2>
+        <p><b>Session:</b> $session_code</p>
+        <p><b>Table Order ID:</b> $order_id</p>
+        <p><b>Item:</b> {$item['name']}</p>
+        <p><b>Qty:</b> {$item['qty']}</p>
+        <p><b>Price:</b> {$item['price']}</p>
+    ";
+
+    sendEmail(
+        "wsamson630@gmail.com",
+        "New Order Item - {$item['name']}",
+        $body
+    );
+}
+    
 
     echo json_encode([
         "status" => "success",
