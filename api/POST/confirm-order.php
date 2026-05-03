@@ -84,8 +84,17 @@ if ($status === 'paid') {
 }
 
 /* ===== AMOUNT CHECK ===== */
-if ((float)$db_amount !== (float)$result['data']['amount']) {
-    echo json_encode(["status" => "error", "message" => "Amount mismatch"]);
+$flutter_amount = (float) $result['data']['amount'];
+$db_amount = (float) $db_amount;
+
+/* allow tiny rounding differences */
+if (abs($db_amount - $flutter_amount) > 0.01) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Amount mismatch",
+        "db" => $db_amount,
+        "flutterwave" => $flutter_amount
+    ]);
     exit;
 }
 
