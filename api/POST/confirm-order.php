@@ -25,7 +25,8 @@ require_once __DIR__ . '/../SECURE/gmailApi/resend_mailer.php';
 $data = json_decode(file_get_contents("php://input"), true);
 
 $order_id    = $data['order_id'] ?? null;
-$ref         = $data['transaction_id'] ?? '';
+$transaction_id = $data['transaction_id'] ?? '';
+$tx_ref = $data['tx_ref'] ?? '';
 $total       = $data['amount'] ?? 0;
 $orderType   = $data['order_type'] ?? 'table';
 $tableNo     = $data['table_no'] ?? '';
