@@ -128,7 +128,14 @@ try {
     $pickup_time,
     $tx_ref
 );
-    $stmt->execute();
+   // $stmt->execute();
+    if (!$stmt->execute()) {
+    echo json_encode([
+        "status" => "error",
+        "message" => $stmt->error
+    ]);
+    exit;
+    }
     $paid_order_id = $stmt->insert_id;
 
     /* ===== INSERT ORDER ITEMS ===== */
