@@ -115,7 +115,7 @@ try {
     $status = "payment_pending";
 
     $stmt->bind_param(
-    "isssssdsdss",
+    "isssssdssss",
     $user_id,
     $name,
     $phone,
@@ -128,7 +128,6 @@ try {
     $pickup_time,
     $tx_ref
 );
-
     $stmt->execute();
     $paid_order_id = $stmt->insert_id;
 
