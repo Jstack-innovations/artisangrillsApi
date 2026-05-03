@@ -9,202 +9,154 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
-
-$file = __DIR__ . '/../SECURE/db.php';
-
-if (!file_exists($file)) {
-    die(json_encode(["error" => "db.php not found"]));
-}
-
-require_once $file;
-
+require_once __DIR__ . '/../SECURE/db.php';
 require_once __DIR__ . '/../SECURE/gmailApi/resend_mailer.php';
-
-
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$order_id    = $data['order_id'] ?? null;
+$order_id       = $data['order_id'] ?? null;
 $transaction_id = $data['transaction_id'] ?? '';
-$tx_ref = $data['tx_ref'] ?? '';
-$total       = $data['amount'] ?? 0;
-$orderType   = $data['order_type'] ?? 'table';
-$tableNo     = $data['table_no'] ?? '';
-$cart        = $data['cart'] ?? [];
+$orderType      = $data['order_type'] ?? 'table';
+$tableNo        = $data['table_no'] ?? '';
+$cart           = $data['cart'] ?? [];
 
-
-
-/* ===== VALIDATION ===== */
-
-if (!$order_id || (!$transaction_id && !$tx_ref) || empty($cart))
+if (!$order_id || !$transaction_id || empty($cart)) {
     echo json_encode(["status" => "error", "message" => "Missing data"]);
     exit;
 }
 
-
-
-
+/* ===== GET SECRET KEY ===== */
 ob_start();
 include __DIR__ . '/../SECURE/flutterwave-key.php';
 $keyOutput = ob_get_clean();
+
 $keyData = json_decode($keyOutput, true);
 $secretKey = $keyData['secretKey'] ?? '';
 
 if (!$secretKey) {
-    echo json_encode([
-        "status"  => "error",
-        "message" => "Secret key not found"
-    ]);
+    echo json_encode(["status" => "error", "message" => "Secret key not found"]);
     exit;
 }
 
-
-
-
+/* ===== VERIFY PAYMENT ===== */
 $curl = curl_init();
 
-curl_setopt_array($curl, array(
-  CURLOPT_URL => "https://api.flutterwave.com/v3/transactions/$transaction_id/verify",
-  CURLOPT_RETURNTRANSFER => true,
-  CURLOPT_CUSTOMREQUEST => "GET",
-  CURLOPT_HTTPHEADER => array(
-    "Authorization: Bearer $secretKey",
-    "Content-Type: application/json"
-  ),
-));
+curl_setopt_array($curl, [
+    CURLOPT_URL => "https://api.flutterwave.com/v3/transactions/$transaction_id/verify",
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        "Authorization: Bearer $secretKey"
+    ],
+]);
 
 $response = curl_exec($curl);
+
+if (curl_errno($curl)) {
+    echo json_encode(["status" => "error", "message" => "Payment gateway error"]);
+    exit;
+}
+
 curl_close($curl);
 
 $result = json_decode($response, true);
 
 if (
-    $result['status'] !== 'success' ||
-    $result['data']['status'] !== 'successful'
+    !$result ||
+    ($result['status'] ?? '') !== 'success' ||
+    ($result['data']['status'] ?? '') !== 'successful'
 ) {
     echo json_encode(["status" => "error", "message" => "Payment not verified"]);
     exit;
 }
 
-/* Optional: check amount matches */
-if ((float)$result['data']['amount'] !== (float)$total) {
+/* ===== GET DB AMOUNT (SOURCE OF TRUTH) ===== */
+$stmt = $conn->prepare("SELECT total_amount, status FROM paid_orders WHERE id = ?");
+$stmt->bind_param("i", $order_id);
+$stmt->execute();
+$stmt->bind_result($db_amount, $status);
+$stmt->fetch();
+$stmt->close();
+
+/* ===== ALREADY PAID CHECK ===== */
+if ($status === 'paid') {
+    echo json_encode(["status" => "error", "message" => "Already paid"]);
+    exit;
+}
+
+/* ===== AMOUNT CHECK ===== */
+if ((float)$db_amount !== (float)$result['data']['amount']) {
     echo json_encode(["status" => "error", "message" => "Amount mismatch"]);
     exit;
 }
 
+/* ===== PAYMENT REF ===== */
+$payment_ref = $transaction_id;
 
-
-
+/* ===== TRANSACTION ===== */
 $conn->begin_transaction();
 
 try {
 
-    /* ===== UPDATE ORDER: payment_pending → paid ===== */
-    /* This is when kitchen gets visibility of the order */
-
-    $updateStmt = $conn->prepare("
+    /* UPDATE ORDER */
+    $stmt = $conn->prepare("
         UPDATE paid_orders
         SET status = 'paid', payment_ref = ?
         WHERE id = ? AND status = 'payment_pending'
     ");
 
-    $payment_ref = $transaction_id ?: $tx_ref;
-    $updateStmt->bind_param("si", $payment_ref, $order_id);
-    $updateStmt->execute();
+    $stmt->bind_param("si", $payment_ref, $order_id);
+    $stmt->execute();
 
-    if ($updateStmt->affected_rows === 0) {
-        throw new Exception("Order not found or already confirmed");
+    if ($stmt->affected_rows === 0) {
+        throw new Exception("Order update failed");
     }
 
-    /* ===== TABLE BOOKING ===== */
-
+    /* TABLE BOOKING */
     if ($orderType === 'table' && !empty($tableNo)) {
 
-        $conn->query("
+        $stmt2 = $conn->prepare("
             INSERT INTO booked_tables (table_id, booked)
-            VALUES ($tableNo, 1)
-            ON DUPLICATE KEY UPDATE booked=1
+            VALUES (?, 1)
+            ON DUPLICATE KEY UPDATE booked = 1
         ");
+
+        $stmt2->bind_param("i", $tableNo);
+        $stmt2->execute();
     }
 
-    /* ===== REDUCE STOCK ===== */
-
-    $updateStock = $conn->prepare("
+    /* STOCK UPDATE */
+    $stockStmt = $conn->prepare("
         UPDATE menu_stock 
         SET stock = stock - ?, 
-            available = CASE 
-                WHEN stock - ? <= 0 THEN 0 
-                ELSE 1 
-            END
-        WHERE menu_id = ? 
-        AND stock >= ?
+            available = CASE WHEN stock - ? <= 0 THEN 0 ELSE 1 END
+        WHERE menu_id = ? AND stock >= ?
     ");
 
     foreach ($cart as $item) {
 
-        $updateStock->bind_param(
-            "iiii",
-            $item['quantity'],
-            $item['quantity'],
-            $item['id'],
-            $item['quantity']
-        );
+        $qty = (int)$item['quantity'];
+        $id  = (int)$item['id'];
 
-        $updateStock->execute();
+        $stockStmt->bind_param("iiii", $qty, $qty, $id, $qty);
+        $stockStmt->execute();
 
-        if ($updateStock->affected_rows === 0) {
-            throw new Exception("Not enough stock for " . $item['name']);
+        if ($stockStmt->affected_rows === 0) {
+            throw new Exception("Stock error: " . $item['name']);
         }
     }
 
     $conn->commit();
 
-
-    /* ===== SEND EMAIL NOTIFICATION ===== */
-
-$itemsText = "";
-
-foreach ($cart as $item) {
-    $itemsText .= "
-        <li>{$item['name']} x {$item['quantity']}</li>
-    ";
-}
-
-$emailBody = "
-<h2>🔥 New Paid Order</h2>
-
-<p><b>Order ID:</b> $order_id</p>
-<p><b>Payment Ref:</b> $ref</p>
-<p><b>Table:</b> $tableNo</p>
-<p><b>Type:</b> $orderType</p>
-
-<h3>Items:</h3>
-<ul>
-    $itemsText
-</ul>
-
-<p><b>Total:</b> $$total</p>
-";
-
-sendEmail(
-    "wsamson630@gmail.com", // 👈 change to admin/kitchen email
-    "New Paid Order #$order_id",
-    $emailBody
-);
-    
-
     echo json_encode([
-        "status"   => "success",
+        "status" => "success",
         "order_id" => $order_id
     ]);
 
 } catch (Exception $e) {
-
     $conn->rollback();
 
     echo json_encode([
-        "status"  => "error",
+        "status" => "error",
         "message" => $e->getMessage()
     ]);
 }
-
