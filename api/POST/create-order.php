@@ -30,6 +30,7 @@ $pickup_time = $data['pickup_time'] ?? '';
 $orderType   = $data['order_type'] ?? 'table';
 $total       = $data['amount'] ?? 0;
 $cart        = $data['cart'] ?? [];
+$tx_ref      = $data['tx_ref'] ?? null;
 
 
 
@@ -106,27 +107,27 @@ try {
     /* Kitchen does NOT see this — only 'paid' orders are shown to kitchen */
 
     $stmt = $conn->prepare("
-        INSERT INTO paid_orders
-        (user_id, name, phone, table_no, full_address, order_type,
-         total_amount, plate_order_no, status, pickup_time)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ");
-
+    INSERT INTO paid_orders
+    (user_id, name, phone, table_no, full_address, order_type,
+     total_amount, plate_order_no, status, pickup_time, tx_ref)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+");
     $status = "payment_pending";
 
     $stmt->bind_param(
-        "isssssdsss",
-        $user_id,
-        $name,
-        $phone,
-        $tableNo,
-        $address,
-        $orderType,
-        $total,
-        $plate_no,
-        $status,
-        $pickup_time
-    );
+    "isssssdsdss",
+    $user_id,
+    $name,
+    $phone,
+    $tableNo,
+    $address,
+    $orderType,
+    $total,
+    $plate_no,
+    $status,
+    $pickup_time,
+    $tx_ref
+);
 
     $stmt->execute();
     $paid_order_id = $stmt->insert_id;
