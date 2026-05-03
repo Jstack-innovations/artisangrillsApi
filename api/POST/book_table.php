@@ -17,6 +17,8 @@ if (!file_exists($file)) {
 
 require_once $file;
 
+require_once __DIR__ . '/../SECURE/gmailApi/resend_mailer.php';
+
 
 
 // Read JSON payload from Flutterwave
@@ -121,11 +123,34 @@ $stmt2->execute();
 $reservation_id = $stmt2->insert_id;
 
 if ($reservation_id) {
+
+    /* ===== SEND BOOKING EMAIL ===== */
+
+    $emailBody = "
+    <h2>📅 New Table Reservation</h2>
+
+    <p><b>Reservation Code:</b> $reservation_code</p>
+    <p><b>Name:</b> $name</p>
+    <p><b>Email:</b> $email</p>
+    <p><b>Phone:</b> $phone</p>
+    <p><b>Table ID:</b> $tableId</p>
+    <p><b>Booking Date:</b> $bookingDate</p>
+    <p><b>Amount Paid:</b> $$amount</p>
+    <p><b>Transaction ID:</b> $transaction_id</p>
+    ";
+
+    sendEmail(
+        "wsamson630@gmail.com", // 👈 Admin/Kitchen email
+        "New Table Reservation - $reservation_code",
+        $emailBody
+    );
+
     echo json_encode([
         "success" => true,
         "reservation_id" => $reservation_id,
         "reservation_code" => $reservation_code
     ]);
+    
 } else {
     echo json_encode([
         "success" => false,
