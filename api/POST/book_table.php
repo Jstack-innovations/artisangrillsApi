@@ -8,7 +8,6 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-
 $file = __DIR__ . '/../SECURE/db.php';
 
 if (!file_exists($file)) {
@@ -16,9 +15,7 @@ if (!file_exists($file)) {
 }
 
 require_once $file;
-
 require_once __DIR__ . '/../SECURE/gmailApi/resend_mailer.php';
-
 
 
 // Read JSON payload from Flutterwave
@@ -29,18 +26,16 @@ $name           = $data['name'] ?? null;
 $email          = $data['email'] ?? null;
 $phone          = $data['phone'] ?? null;
 $bookingDate    = $data['bookingDate'] ?? null;
-$amount         = $data['amount'] ?? null;
 $transaction_id = $data['transaction_id'] ?? null;
 
-// Validate required fields
-if (!$tableId || !$name || !$email || !$phone || !$bookingDate || !$amount || !$transaction_id) {
+// Validate required fields (NO frontend amount trust)
+if (!$tableId || !$name || !$email || !$phone || !$bookingDate || !$transaction_id) {
     echo json_encode([
         "success" => false,
         "message" => "Missing required fields"
     ]);
     exit;
 }
-
 
 
 // Fetch Flutterwave secret key
@@ -58,7 +53,8 @@ if (!$secretKey) {
     exit;
 }
 
-// Verify transaction with Flutterwave
+
+// Verify transaction with Flutterwave (SOURCE OF TRUTH)
 $curl = curl_init();
 curl_setopt_array($curl, [
     CURLOPT_URL => "https://api.flutterwave.com/v3/transactions/$transaction_id/verify",
@@ -83,23 +79,18 @@ if ($result['status'] !== 'success' || $result['data']['status'] !== 'successful
     exit;
 }
 
-// Optional: verify amount
-if ((float)$result['data']['amount'] !== (float)$amount) {
-    echo json_encode([
-        "success" => false,
-        "message" => "Amount mismatch"
-    ]);
-    exit;
-}
+
+// ✅ TRUST ONLY FLUTTERWAVE AMOUNT
+$amount = (float)$result['data']['amount'];
 
 
-
-
-// ✅ FIX ADDED HERE — Convert booking date to proper MySQL DATETIME format
+// Convert booking date
 $bookingDate = date("Y-m-d H:i:s", strtotime($bookingDate));
+
 
 // Generate unique reservation code
 $reservation_code = "RES-ART-" . strtoupper(substr(md5(uniqid()), 0, 8));
+
 
 // Mark table as booked
 $stmt = $conn->prepare("
@@ -110,21 +101,33 @@ $stmt = $conn->prepare("
 $stmt->bind_param("i", $tableId);
 $stmt->execute();
 
+
 // Save reservation details
 $stmt2 = $conn->prepare("
     INSERT INTO reservations 
     (table_id, name, email, phone, booking_date, amount, transaction_id, status, reservation_code)
     VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)
 ");
-// ✅ FIX: Correct type string for bind_param
-$stmt2->bind_param("issssdss", $tableId, $name, $email, $phone, $bookingDate, $amount, $transaction_id, $reservation_code);
+
+$stmt2->bind_param(
+    "issssdss",
+    $tableId,
+    $name,
+    $email,
+    $phone,
+    $bookingDate,
+    $amount,
+    $transaction_id,
+    $reservation_code
+);
+
 $stmt2->execute();
 
 $reservation_id = $stmt2->insert_id;
 
-if ($reservation_id) {
 
-    /* ===== SEND BOOKING EMAIL ===== */
+// Success response + email
+if ($reservation_id) {
 
     $emailBody = "
     <h2>📅 New Table Reservation</h2>
@@ -135,12 +138,12 @@ if ($reservation_id) {
     <p><b>Phone:</b> $phone</p>
     <p><b>Table ID:</b> $tableId</p>
     <p><b>Booking Date:</b> $bookingDate</p>
-    <p><b>Amount Paid:</b> $$amount</p>
+    <p><b>Amount Paid:</b> $amount</p>
     <p><b>Transaction ID:</b> $transaction_id</p>
     ";
 
     sendEmail(
-        "wsamson630@gmail.com", // 👈 Admin/Kitchen email
+        "wsamson630@gmail.com",
         "New Table Reservation - $reservation_code",
         $emailBody
     );
@@ -150,7 +153,7 @@ if ($reservation_id) {
         "reservation_id" => $reservation_id,
         "reservation_code" => $reservation_code
     ]);
-    
+
 } else {
     echo json_encode([
         "success" => false,
