@@ -159,6 +159,11 @@ if ($uri === "/sendReport") {
     exit;
 }
 
+if ($uri === "/sendTelegramReport") {
+    require $basePath . "/SECURE/sendTelegramReport.php";
+    exit;
+}
+
 
 
 /* ADMINS ROUTES */
