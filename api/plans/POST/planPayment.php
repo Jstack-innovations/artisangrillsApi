@@ -13,97 +13,91 @@ require_once __DIR__ . '/../../SECURE/db.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$fullname     = $data['fullname'] ?? '';
-$username     = $data['username'] ?? '';
-$email        = $data['email'] ?? '';
-$phone        = $data['phone'] ?? '';
-$country      = $data['country'] ?? '';
-$dob          = $data['dob'] ?? '';
-$gender       = $data['gender'] ?? '';
-$businessType = $data['businessType'] ?? '';
-$businessName = $data['businessName'] ?? '';
-$plan         = $data['plan'] ?? '';
-$amount       = $data['amount'] ?? 0;
+$fullname     = $data['fullname']       ?? '';
+$username     = $data['username']       ?? '';
+$email        = $data['email']          ?? '';
+$phone        = $data['phone']          ?? '';
+$country      = $data['country']        ?? '';
+$dob          = $data['dob']            ?? '';
+$gender       = $data['gender']         ?? '';
+$businessType = $data['businessType']   ?? '';
+$businessName = $data['businessName']   ?? '';
+$plan         = $data['plan']           ?? '';
+$amount       = $data['amount']         ?? 0;
 $tx_id        = $data['transaction_id'] ?? '';
 
 if (!$tx_id || !$email || !$amount) {
-    echo json_encode(["status"=>"error","message"=>"Missing data"]);
+    echo json_encode(["status" => "error", "message" => "Missing required data"]);
     exit;
 }
 
 
-
 #################################################
-# 🔐 FETCH SECRET KEY FROM flutterwave-key.php
+# 🔐 FETCH SECRET KEY
 #################################################
 
 ob_start();
 include __DIR__ . '/../../SECURE/flutterwave-key.php';
 $keyOutput = ob_get_clean();
 
-$keyData = json_decode($keyOutput, true);
-
+$keyData   = json_decode($keyOutput, true);
 $secretKey = $keyData['secretKey'] ?? '';
 
 if (!$secretKey) {
-    echo json_encode([
-        "status"=>"error",
-        "message"=>"Secret key not found"
-    ]);
+    echo json_encode(["status" => "error", "message" => "Payment configuration error"]);
     exit;
 }
 
 
-
 #################################################
-# 🔐 VERIFY WITH FLUTTERWAVE SECRET KEY
+# 🔐 VERIFY TRANSACTION WITH FLUTTERWAVE (backend only)
 #################################################
 
 $curl = curl_init();
-
-curl_setopt_array($curl, array(
-  CURLOPT_URL => "https://api.flutterwave.com/v3/transactions/$tx_id/verify",
-  CURLOPT_RETURNTRANSFER => true,
-  CURLOPT_CUSTOMREQUEST => "GET",
-  CURLOPT_HTTPHEADER => array(
-    "Authorization: Bearer $secretKey",
-    "Content-Type: application/json"
-  ),
-));
-
+curl_setopt_array($curl, [
+    CURLOPT_URL            => "https://api.flutterwave.com/v3/transactions/$tx_id/verify",
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_CUSTOMREQUEST  => "GET",
+    CURLOPT_HTTPHEADER     => [
+        "Authorization: Bearer $secretKey",
+        "Content-Type: application/json"
+    ],
+]);
 $response = curl_exec($curl);
 curl_close($curl);
 
 $result = json_decode($response, true);
 
+// Check transaction status
 if (
-    $result['status'] !== 'success' ||
-    $result['data']['status'] !== 'successful'
+    ($result['status'] ?? '')           !== 'success' ||
+    ($result['data']['status'] ?? '')   !== 'successful'
 ) {
-    echo json_encode(["status"=>"error","message"=>"Payment not verified"]);
+    echo json_encode(["status" => "error", "message" => "Payment verification failed"]);
     exit;
 }
 
-#################################################
-# ✅ OPTIONAL: CHECK AMOUNT MATCH
-#################################################
+// Check currency is NGN
+if (($result['data']['currency'] ?? '') !== 'NGN') {
+    echo json_encode(["status" => "error", "message" => "Invalid payment currency"]);
+    exit;
+}
 
+// Check amount matches
 if ((float)$result['data']['amount'] !== (float)$amount) {
-    echo json_encode(["status"=>"error","message"=>"Amount mismatch"]);
+    echo json_encode(["status" => "error", "message" => "Amount mismatch"]);
     exit;
 }
 
 
-
 #################################################
-# 🔑 GENERATE 21 DIGIT SUBSCRIPTION CODE
+# 🔑 GENERATE 21-DIGIT SUBSCRIPTION CODE
 #################################################
 
-function generateSubscriptionCode($length = 21) {
-    $characters = '0123456789';
+function generateSubscriptionCode(int $length = 21): string {
     $code = '';
     for ($i = 0; $i < $length; $i++) {
-        $code .= $characters[random_int(0, strlen($characters) - 1)];
+        $code .= random_int(0, 9);
     }
     return $code;
 }
@@ -111,20 +105,16 @@ function generateSubscriptionCode($length = 21) {
 $subscriptionCode = generateSubscriptionCode();
 
 
-
 #################################################
-# RENEWAL DATE CALCULATION
+# 📅 RENEWAL DATE CALCULATION
 #################################################
-
-// Determine renewal date
-$renewalDate = null;
 
 if (stripos($plan, "annual") !== false) {
-    // Annual plan → add 1 year
     $renewalDate = date("Y-m-d", strtotime("+1 year"));
 } elseif (stripos($plan, "monthly") !== false) {
-    // Monthly plan → add 1 month
     $renewalDate = date("Y-m-d", strtotime("+1 month"));
+} else {
+    $renewalDate = null;
 }
 
 
@@ -132,12 +122,14 @@ if (stripos($plan, "annual") !== false) {
 # 💾 INSERT INTO DATABASE
 #################################################
 
-// Insert into DB (if you want to save it)
+$status = "active";
+
 $stmt = $conn->prepare("
     INSERT INTO subscriptions
-(fullname, username, email, phone, country, dob, gender,
- business_type, business_name, plan, amount, transaction_id, subscription_code, status, renewal_date)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (fullname, username, email, phone, country, dob, gender,
+         business_type, business_name, plan, amount, transaction_id,
+         subscription_code, status, renewal_date)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 ");
 
 $stmt->bind_param(
@@ -159,11 +151,14 @@ $stmt->bind_param(
     $renewalDate
 );
 
-$stmt->execute();
+if (!$stmt->execute()) {
+    echo json_encode(["status" => "error", "message" => "Database error: " . $stmt->error]);
+    exit;
+}
 
-// Return JSON including renewal date
 echo json_encode([
-    "status" => "success",
+    "status"            => "success",
     "subscription_code" => $subscriptionCode,
-    "renewal_date" => $renewalDate
+    "renewal_date"      => $renewalDate
 ]);
+
