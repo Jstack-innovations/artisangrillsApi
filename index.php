@@ -235,6 +235,12 @@ if ($uri === "/adminLogin") {
     exit;
 }
 
+if ($uri === "/deductCredits") {
+    require $basePath . "/admins/POST/deductCredits.php";
+    exit;
+}
+
+
 if ($uri === "/adminLogout") {
     require $basePath . "/admins/POST/logout.php";
     exit;
