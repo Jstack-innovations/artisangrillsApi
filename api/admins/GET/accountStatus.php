@@ -1,24 +1,32 @@
 <?php
-/**
- * Enflow Account Status API
- * Endpoint: GET /api/accountStatus
- */
+header("Content-Type: application/json");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
 
-require_once __DIR__ . "/../../SECURE/authGuard.php";
-require_once __DIR__ . "/../../SECURE/config.php";
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") { http_response_code(200); exit(); }
 
-$adminId = (int) $_SESSION["admin_id"];
+require_once __DIR__ . '/../../SECURE/config.php';
 
-// ── Fetch user row from enflow_users using admin_id ──
+// ── Identify user by token (sent from frontend after signup/login) ──
+$token = trim($_GET["token"] ?? $_SERVER["HTTP_X_USER_TOKEN"] ?? "");
+
+if (!$token) {
+    http_response_code(401);
+    echo json_encode(["status" => "error", "message" => "No token provided."]);
+    exit();
+}
+
 $stmt = $pdo->prepare("
-    SELECT name, email, selected_plan, trial_started_at, trial_ends_at,
-           is_subscribed, subscription_plan, subscription_start, subscription_end,
-           zara_credits, zara_credits_used
-    FROM enflow_users
-    WHERE id = :id
+    SELECT id, name, email, phone, plan, status,
+           trial_started_at, trial_ends_at,
+           renewal_date, subscription_code,
+           zara_credits, zara_credits_used, amount, created_at
+    FROM subscriptions
+    WHERE onboarding_token = :token
     LIMIT 1
 ");
-$stmt->execute([":id" => $adminId]);
+$stmt->execute([":token" => $token]);
 $user = $stmt->fetch();
 
 if (!$user) {
@@ -27,27 +35,43 @@ if (!$user) {
     exit();
 }
 
-$now = new DateTime();
+$now        = new DateTime();
+$status     = $user["status"];
 
-// ── Determine account status ──
-if ($user["is_subscribed"] && $user["subscription_end"]) {
-    $subEnd = new DateTime($user["subscription_end"]);
-    $accountStatus = $subEnd > $now ? "active" : "expired";
-} elseif ($user["trial_ends_at"]) {
+// ── Auto-expire trial if time has passed ──
+if ($status === "trial" && $user["trial_ends_at"]) {
     $trialEnd = new DateTime($user["trial_ends_at"]);
-    $accountStatus = $trialEnd > $now ? "trial" : "expired";
-} else {
-    $accountStatus = "none";
+    if ($trialEnd <= $now) {
+        // Mark expired in DB
+        $pdo->prepare("UPDATE subscriptions SET status = 'expired' WHERE id = :id")
+            ->execute([":id" => $user["id"]]);
+        $status = "expired";
+    }
+}
+
+// ── Auto-expire active subscription if renewal passed ──
+if ($status === "active" && $user["renewal_date"]) {
+    $renewalDate = new DateTime($user["renewal_date"]);
+    if ($renewalDate <= $now) {
+        $pdo->prepare("UPDATE subscriptions SET status = 'expired' WHERE id = :id")
+            ->execute([":id" => $user["id"]]);
+        $status = "expired";
+    }
 }
 
 echo json_encode([
     "name"               => $user["name"],
     "email"              => $user["email"],
-    "plan"               => $user["is_subscribed"] ? $user["subscription_plan"] : $user["selected_plan"],
-    "status"             => $accountStatus,
+    "phone"              => $user["phone"],
+    "plan"               => $user["plan"],
+    "status"             => $status,           // trial | active | expired
+    "trial_started_at"   => $user["trial_started_at"],
     "trial_ends_at"      => $user["trial_ends_at"],
-    "subscription_start" => $user["subscription_start"],
-    "subscription_end"   => $user["subscription_end"],
-    "zara_credits"       => (int) ($user["zara_credits"] ?? 1000),
-    "zara_credits_used"  => (int) ($user["zara_credits_used"] ?? 0),
+    "subscription_start" => $user["created_at"],
+    "renewal_date"       => $user["renewal_date"],
+    "subscription_code"  => $user["subscription_code"],
+    "amount_paid"        => $user["amount"],
+    "zara_credits"       => (int) $user["zara_credits"],
+    "zara_credits_used"  => (int) $user["zara_credits_used"],
+    "zara_credits_left"  => (int) $user["zara_credits"] - (int) $user["zara_credits_used"],
 ]);
