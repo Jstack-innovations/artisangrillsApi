@@ -25,7 +25,11 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
 }
 
 require_once __DIR__ . '/../../SECURE/config.php';
-define("TRIAL_DAYS", 5);
+// Change this:
+//define("TRIAL_DAYS", 5);
+
+// To this:
+define("TRIAL_DAYS", 10);
 
 // ── Parse body ──
 $body = json_decode(file_get_contents("php://input"), true);
