@@ -1,0 +1,125 @@
+{
+  "plans": [
+    {
+      "title": "Web",
+      "subtitle": "Annual Deal",
+      "price": "$300",
+      "period": "/ year",
+      "features": [
+        "All analytics dashboards",
+        "Export reports as PDF",
+        "Top-selling items view",
+        "Real-time order tracking",
+        "Zara AI assistant"
+      ],
+      "cta": "Pay Now",
+      "amount": 300
+    },
+    {
+      "title": "Web + App",
+      "subtitle": "Annual Deal",
+      "price": "$600",
+      "period": "/ year",
+      "badge": "BEST VALUE",
+      "highlight": true,
+      "features": [
+        "Everything in Web Annual",
+        "iOS & Android mobile app",
+        "Cross-platform sync",
+        "Push notifications",
+        "Zara AI on mobile"
+      ],
+      "cta": "Pay Now",
+      "amount": 600
+    },
+    {
+      "title": "Web",
+      "subtitle": "Monthly",
+      "price": "$80",
+      "monthly": "then $20 / month",
+      "period": "first payment",
+      "features": [
+        "Monthly flexibility",
+        "Automatic updates",
+        "Priority WhatsApp support",
+        "Analytics dashboards",
+        "Zara AI assistant"
+      ],
+      "cta": "Subscribe",
+      "amount": 80
+    },
+    {
+      "title": "Web + App",
+      "subtitle": "Monthly",
+      "price": "$150",
+      "monthly": "then $35 / month",
+      "period": "first payment",
+      "features": [
+        "Everything in Web Monthly",
+        "iOS & Android mobile app",
+        "Cross-platform sync",
+        "Push notifications",
+        "Priority support"
+      ],
+      "cta": "Subscribe",
+      "amount": 150
+    },
+    {
+      "title": "Enterprise",
+      "subtitle": "Custom Plan",
+      "price": "Custom",
+      "period": "pricing",
+      "features": [
+        "Personalized dashboards",
+        "Multiple branch support",
+        "Dedicated account manager",
+        "Email & WhatsApp support",
+        "SLA guarantee"
+      ],
+      "cta": "Contact Us",
+      "isContact": true
+    }
+  ],
+  "faqs": [
+    {
+      "q": "What happens after the free trial?",
+      "a": "Access is limited until you upgrade to a paid plan. Your data is always safe."
+    },
+    {
+      "q": "Can I switch plans?",
+      "a": "Yes, switch between one-time or subscription anytime with no penalty."
+    },
+    {
+      "q": "What payment methods are accepted?",
+      "a": "Card, bank transfer, and USSD via Flutterwave."
+    },
+    {
+      "q": "Need a custom plan?",
+      "a": "Email us or WhatsApp for enterprise solutions tailored to your business."
+    }
+  ],
+  "stats": [
+    { "value": "2,400+", "label": "Orders processed daily" },
+    { "value": "₦18M+",  "label": "Revenue tracked" },
+    { "value": "99.9%",  "label": "Uptime guarantee" },
+    { "value": "< 1s",   "label": "Zara response time" }
+  ],
+  "benefits": [
+    {
+      "icon": "◈",
+      "title": "Full Intelligence",
+      "desc": "Zara AI monitors every order, every table, every naira — in real time."
+    },
+    {
+      "icon": "◉",
+      "title": "Zero Manual Work",
+      "desc": "Automated reports, stock alerts, and Telegram updates without lifting a finger."
+    },
+    {
+      "icon": "◇",
+      "title": "Revenue Growth",
+      "desc": "Menu optimization, peak hour insights, and profit tracking built in."
+    }
+  ]
+}
+
