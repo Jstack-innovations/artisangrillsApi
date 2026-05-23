@@ -9,7 +9,7 @@
  */
 
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *"); // lock this down to your domain in production
+header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
@@ -24,29 +24,8 @@ if ($_SERVER["REQUEST_METHOD"] !== "POST") {
     exit();
 }
 
-// ── DB Config ── replace with your actual credentials
-define("DB_HOST", "localhost");
-define("DB_NAME", "enflow_db");
-define("DB_USER", "root");
-define("DB_PASS", "your_password");
+require_once __DIR__ . '/../../SECURE/config.php';
 define("TRIAL_DAYS", 5);
-
-// ── Connect ──
-try {
-    $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-        DB_USER,
-        DB_PASS,
-        [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        ]
-    );
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode(["status" => "error", "message" => "Database connection failed."]);
-    exit();
-}
 
 // ── Parse body ──
 $body = json_decode(file_get_contents("php://input"), true);
@@ -86,17 +65,16 @@ $stmt->execute([":email" => $email, ":phone" => $phone]);
 $existing = $stmt->fetch();
 
 if ($existing) {
-    // User already in system — send them to checkout
     echo json_encode([
         "status"  => "existing",
         "message" => "Account found. Please upgrade to continue.",
         "user"    => [
-            "id"             => $existing["id"],
-            "name"           => $existing["name"],
-            "email"          => $existing["email"],
-            "phone"          => $existing["phone"],
-            "is_subscribed"  => (bool) $existing["is_subscribed"],
-            "trial_ends_at"  => $existing["trial_ends_at"],
+            "id"            => $existing["id"],
+            "name"          => $existing["name"],
+            "email"         => $existing["email"],
+            "phone"         => $existing["phone"],
+            "is_subscribed" => (bool) $existing["is_subscribed"],
+            "trial_ends_at" => $existing["trial_ends_at"],
         ],
     ]);
     exit();
@@ -105,7 +83,7 @@ if ($existing) {
 // ── New user — create account and start trial ──
 $trialStart = date("Y-m-d H:i:s");
 $trialEnd   = date("Y-m-d H:i:s", strtotime("+" . TRIAL_DAYS . " days"));
-$token      = bin2hex(random_bytes(32)); // unique session/onboarding token
+$token      = bin2hex(random_bytes(32));
 
 try {
     $stmt = $pdo->prepare("
@@ -130,21 +108,17 @@ try {
     exit();
 }
 
-// ── Optionally send welcome email here (PHPMailer / Mailgun / etc.) ──
-// sendWelcomeEmail($email, $name, $trialEnd);
-
 echo json_encode([
     "status"  => "new",
     "message" => "Trial started successfully.",
     "user"    => [
-        "id"              => $userId,
-        "name"            => $name,
-        "email"           => $email,
-        "phone"           => $phone,
-        "selected_plan"   => $plan,
-        "trial_starts_at" => $trialStart,
-        "trial_ends_at"   => $trialEnd,
-        "onboarding_token"=> $token,
+        "id"               => $userId,
+        "name"             => $name,
+        "email"            => $email,
+        "phone"            => $phone,
+        "selected_plan"    => $plan,
+        "trial_starts_at"  => $trialStart,
+        "trial_ends_at"    => $trialEnd,
+        "onboarding_token" => $token,
     ],
 ]);
-
