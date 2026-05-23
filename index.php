@@ -311,6 +311,11 @@ if ($uri === "/subscriptionContent") {
     exit;
 }
 
+if ($uri === "/settings") {
+    require $basePath . "/plans/GET/CORS/settings.php";
+    exit;
+}
+
 /*POST*/
 if ($uri === "/subPlans") {
     require $basePath . "/plans/POST/planPayment.php";
