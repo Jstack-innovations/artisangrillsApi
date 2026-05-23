@@ -311,6 +311,10 @@ if ($uri === "/subPlans") {
     require $basePath . "/plans/POST/planPayment.php";
     exit;
 }
+if ($uri === "/trialSignup") {
+    require $basePath . "/plans/POST/trial-signup.php";
+    exit;
+}
 
 /*PUT*/
 if ($uri === "/countdown") {
