@@ -5,12 +5,12 @@ header("Access-Control-Allow-Methods: PUT, OPTIONS");
 header("Content-Type: application/json");
 
 // Read JSON file
-$jsonPath = __DIR__ . "/../GET/plan.json";
+$jsonPath = __DIR__ . "/../GET/JSON/countdown.json";
 
 if (!file_exists($jsonPath)) {
     die(json_encode([
         "status" => "error",
-        "message" => "plan.json not found",
+        "message" => "countdown.json not found",
         "path_checked" => $jsonPath
     ]));
 }
