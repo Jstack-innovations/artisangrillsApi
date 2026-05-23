@@ -1,10 +1,12 @@
 {
+  "trialDays": 5,
   "plans": [
     {
       "title": "Web",
       "subtitle": "Annual Deal",
       "price": "$300",
       "period": "/ year",
+      "trialEnabled": true,
       "features": [
         "All analytics dashboards",
         "Export reports as PDF",
@@ -22,6 +24,7 @@
       "period": "/ year",
       "badge": "BEST VALUE",
       "highlight": true,
+      "trialEnabled": true,
       "features": [
         "Everything in Web Annual",
         "iOS & Android mobile app",
@@ -38,6 +41,7 @@
       "price": "$80",
       "monthly": "then $20 / month",
       "period": "first payment",
+      "trialEnabled": true,
       "features": [
         "Monthly flexibility",
         "Automatic updates",
@@ -54,6 +58,7 @@
       "price": "$150",
       "monthly": "then $35 / month",
       "period": "first payment",
+      "trialEnabled": true,
       "features": [
         "Everything in Web Monthly",
         "iOS & Android mobile app",
@@ -69,6 +74,7 @@
       "subtitle": "Custom Plan",
       "price": "Custom",
       "period": "pricing",
+      "trialEnabled": false,
       "features": [
         "Personalized dashboards",
         "Multiple branch support",
@@ -82,12 +88,16 @@
   ],
   "faqs": [
     {
-      "q": "What happens after the free trial?",
-      "a": "Access is limited until you upgrade to a paid plan. Your data is always safe."
+      "q": "What happens after my 5-day free trial?",
+      "a": "Once your trial ends, you'll be prompted to choose a paid plan to continue. Your data stays safe and your settings are preserved — just pick a plan and carry on."
     },
     {
-      "q": "Can I switch plans?",
-      "a": "Yes, switch between one-time or subscription anytime with no penalty."
+      "q": "Do I need a credit card to start the trial?",
+      "a": "No. You can start your 5-day free trial with just your email — no payment details required until you're ready to subscribe."
+    },
+    {
+      "q": "Can I switch plans after subscribing?",
+      "a": "Yes, switch between monthly or annual plans anytime with no penalty."
     },
     {
       "q": "What payment methods are accepted?",
@@ -122,4 +132,3 @@
     }
   ]
 }
-
