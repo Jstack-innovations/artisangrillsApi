@@ -7,7 +7,6 @@ header("Access-Control-Allow-Headers: Content-Type");
 require_once __DIR__ . "/../../SECURE/authGuard.php";
 require_once __DIR__ . "/../../SECURE/config.php";
 
-// Get email from session (your admin login stores this)
 $email = $_SESSION["admin_email"] ?? "";
 
 if (!$email) {
@@ -19,10 +18,10 @@ if (!$email) {
 $now = new DateTime();
 
 $stmt = $pdo->prepare("
-    SELECT id, name, email, phone, plan, status,
+    SELECT name, email, plan, status,
            trial_started_at, trial_ends_at,
            renewal_date, subscription_code,
-           zara_credits, zara_credits_used, amount, created_at
+           zara_credits, zara_credits_used, created_at
     FROM subscriptions
     WHERE LOWER(email) = LOWER(:email)
     ORDER BY created_at DESC
