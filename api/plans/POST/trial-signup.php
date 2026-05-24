@@ -36,7 +36,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 // ── Check if email OR phone already exists in subscriptions ──
 $stmt = $pdo->prepare("
-    SELECT id, name, email, phone, status, trial_ends_at, renewal_date, plan
+    SELECT id, fullname AS name, email, phone, status, trial_ends_at, renewal_date, plan
     FROM subscriptions 
     WHERE LOWER(email) = :email OR phone = :phone 
     LIMIT 1
