@@ -230,6 +230,11 @@ if ($uri === "/adminAddOrder") {
     exit;
 }
 
+if ($uri === "/adminAuthCheck") {
+    require $basePath . "/admins/POST/authCheck.php";
+    exit;
+}
+
 if ($uri === "/adminLogin") {
     require $basePath . "/admins/POST/login.php";
     exit;
