@@ -331,6 +331,10 @@ if ($uri === "/trialSignup") {
     require $basePath . "/plans/POST/trial-signup.php";
     exit;
 }
+if ($uri === "/zaraTopup") {
+    require $basePath . "/plans/POST/zara-topup.php";
+    exit;
+}
 
 /*PUT*/
 if ($uri === "/countdown") {
