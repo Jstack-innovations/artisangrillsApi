@@ -235,6 +235,11 @@ if ($uri === "/adminAuthBanner") {
     exit;
 }
 
+if ($uri === "/adminAuthOffer") {
+    require $basePath . "/admins/POST/authOffer.php";
+    exit;
+}
+
 if ($uri === "/adminLogin") {
     require $basePath . "/admins/POST/login.php";
     exit;
