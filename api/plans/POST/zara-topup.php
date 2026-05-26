@@ -1,7 +1,13 @@
 <?php
 require_once __DIR__ . "/../../SECURE/authGuard.php";
 
-$email = $_SESSION["admin_email"] ?? "";
+$adminId = $GLOBALS['admin_id'];
+
+$stmt = $conn->prepare("SELECT email FROM admins WHERE id = ?");
+$stmt->bind_param("i", $adminId);
+$stmt->execute();
+$admin = $stmt->get_result()->fetch_assoc();
+$email = $admin["email"] ?? "";
 
 if (!$email) {
     http_response_code(401);
@@ -13,7 +19,8 @@ $raw  = file_get_contents("php://input");
 $data = json_decode($raw, true) ?? [];
 $data["email"] = $email;
 
-$ch = curl_init("https://enflowsubscriptions.onrender.com/zaraTopup");
+//$ch = curl_init("https://enflowsubscriptions.onrender.com/zaraTopup");
+$ch = curl_init("https://enflowsubscriptions-production.up.railway.app/zaraTopup");
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
