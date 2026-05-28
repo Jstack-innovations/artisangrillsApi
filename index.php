@@ -220,6 +220,11 @@ if ($uri === "/getAnalytics") {
     exit;
 }
 
+if ($uri === "/getKitchenOrders") {
+    require $basePath . "/admins/GET/getKitchenOrders.php";
+    exit;
+}
+
 
 
 /* POST ROUTES */
@@ -302,6 +307,11 @@ if ($uri === "/adminUpdateTax") {
 
 if ($uri === "/adminUpdateUser") {
     require $basePath . "/admins/PUT/update_user.php";
+    exit;
+}
+
+if ($uri === "/adminUpdateKitchenOrder") {
+    require $basePath . "/admins/PUT/updateKitchenOrder.php";
     exit;
 }
 
