@@ -225,6 +225,12 @@ if ($uri === "/getKitchenOrders") {
     exit;
 }
 
+if ($uri === "/getKdsMenu") {
+    require $basePath . "/admins/GET/getKdsMenu.php";
+    exit;
+}
+
+
 
 
 /* POST ROUTES */
@@ -271,6 +277,11 @@ if ($uri === "/adminOffer") {
     exit;
 }
 
+if ($uri === "/adminUpdateKitchenOrder") {
+    require $basePath . "/admins/POST/updateKitchenOrder.php";
+    exit;
+}
+
 
 /* PUT ROUTES */
 
@@ -307,11 +318,6 @@ if ($uri === "/adminUpdateTax") {
 
 if ($uri === "/adminUpdateUser") {
     require $basePath . "/admins/PUT/update_user.php";
-    exit;
-}
-
-if ($uri === "/adminUpdateKitchenOrder") {
-    require $basePath . "/admins/PUT/updateKitchenOrder.php";
     exit;
 }
 
