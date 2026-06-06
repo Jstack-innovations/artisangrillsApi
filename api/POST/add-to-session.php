@@ -155,25 +155,33 @@ LIMIT 1
 
     $conn->commit();
 
+require_once __DIR__ . '/../SECURE/gmailApi/resend_mailer.php';
 
-    require_once __DIR__ . '/../SECURE/gmailApi/resend_mailer.php';
+$botToken = getenv("TELEGRAM_BOT_TOKEN");
+$chatId   = getenv("TELEGRAM_CHAT_ID");
 
 foreach ($emailsToSend as $item) {
+    // Telegram
+    $message = "🛒 *New Item Added to Session!*\n\n🔑 *Session:* {$session_code}\n🧾 *Order ID:* #{$order_id}\n🪑 *Table:* {$table_no}\n🍽️ *Item:* {$item['name']}\n📦 *Qty:* {$item['qty']}\n💰 *Price:* ₦{$item['price']}";
+    $ch = curl_init("https://api.telegram.org/bot{$botToken}/sendMessage");
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(["chat_id" => $chatId, "text" => $message, "parse_mode" => "Markdown"]));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    curl_exec($ch);
+    curl_close($ch);
 
-$body = "
-    <h2>🔥 New Item Ordered</h2>
-    <p><b>Session:</b> $session_code</p>
-    <p><b>Order ID:</b> $order_id</p>
-    <p><b>Table No:</b> $table_no</p>
-    <p><b>Item:</b> {$item['name']}</p>
-    <p><b>Qty:</b> {$item['qty']}</p>
-    <p><b>Price:</b> {$item['price']}</p>
-";
-
+    // Email
     sendEmail(
         "wsamson630@gmail.com",
         "New Order Item - {$item['name']}",
-        $body
+        "<h2>🔥 New Item Ordered</h2>
+        <p><b>Session:</b> {$session_code}</p>
+        <p><b>Order ID:</b> #{$order_id}</p>
+        <p><b>Table No:</b> {$table_no}</p>
+        <p><b>Item:</b> {$item['name']}</p>
+        <p><b>Qty:</b> {$item['qty']}</p>
+        <p><b>Price:</b> ₦{$item['price']}</p>"
     );
 }
     
