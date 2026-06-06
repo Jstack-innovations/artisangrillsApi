@@ -183,6 +183,21 @@ curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
 curl_exec($ch);
 curl_close($ch);
+
+
+
+    sendEmail(
+    "wsamson630@gmail.com",
+    "New Order Confirmed — #" . $order_id,
+    "
+    <h2>✅ New Order Confirmed</h2>
+    <p><b>Order ID:</b> #{$order_id}</p>
+    <p><b>Transaction ID:</b> {$transaction_id}</p>
+    <p><b>Amount:</b> ₦" . number_format($flutter_amount, 2) . "</p>
+    <p><b>Order Type:</b> {$orderType}</p>
+    " . ($tableNo ? "<p><b>Table:</b> {$tableNo}</p>" : "") . "
+    "
+);
     
 
     echo json_encode([
