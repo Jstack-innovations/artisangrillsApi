@@ -217,6 +217,27 @@ sendEmail(
     $body
 );
 
+
+    
+    $botToken = getenv("TELEGRAM_BOT_TOKEN");
+$chatId   = getenv("TELEGRAM_CHAT_ID");
+
+$itemsText = "";
+foreach ($cart as $item) {
+    $itemsText .= "• {$item['name']} x{$item['quantity']} — ₦{$item['price']}\n";
+}
+
+$message = "🔥 *New Table Order Created!*\n\n🔑 *Session:* {$session_code}\n🧾 *Order ID:* #{$order_id}\n👤 *Name:* {$name}\n📞 *Phone:* {$phone}\n🪑 *Table:* {$tableNo}\n\n🍽️ *Items:*\n{$itemsText}\n💰 *Total:* ₦{$amount}";
+
+$ch = curl_init("https://api.telegram.org/bot{$botToken}/sendMessage");
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(["chat_id" => $chatId, "text" => $message, "parse_mode" => "Markdown"]));
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+curl_exec($ch);
+curl_close($ch);
+    
+
     echo json_encode([
         "status"       => "success",
         "order_id"     => $order_id,
