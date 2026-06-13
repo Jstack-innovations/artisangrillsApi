@@ -3,11 +3,9 @@ require_once __DIR__ . "/authGuard.php";
 
 header("Content-Type: application/json");
 
-// ===== Telegram Credentials =====
 $botToken = getenv("TELEGRAM_BOT_TOKEN");
 $chatId   = getenv("TELEGRAM_CHAT_ID");
 
-// ===== DB Connection =====
 $file = __DIR__ . '/db.php';
 if (!file_exists($file)) die(json_encode(["error" => "db.php not found"]));
 require_once $file;
@@ -15,27 +13,59 @@ require_once $file;
 $costPercentage = 0.65;
 
 try {
+    // ===== Today's Revenue =====
     $stmt = $conn->prepare("
-        SELECT SUM(total_amount) AS grossRevenue
-        FROM paid_orders
+        SELECT SUM(total_amount) FROM paid_orders
+        WHERE status = 'paid' AND DATE(created_at) = CURDATE()
+    ");
+    $stmt->execute();
+    $stmt->bind_result($todayRevenue);
+    $stmt->fetch();
+    $stmt->close();
+    $todayRevenue = $todayRevenue ?? 0;
+
+    // ===== All-Time Revenue =====
+    $stmt = $conn->prepare("
+        SELECT SUM(total_amount) FROM paid_orders
         WHERE status = 'paid'
     ");
     $stmt->execute();
-    $stmt->bind_result($grossRevenue);
+    $stmt->bind_result($allTimeRevenue);
     $stmt->fetch();
     $stmt->close();
+    $allTimeRevenue = $allTimeRevenue ?? 0;
 
-    $grossRevenue    = $grossRevenue ?? 0;
-    $estimatedCost   = $grossRevenue * $costPercentage;
-    $estimatedProfit = $grossRevenue - $estimatedCost;
-    $profitMargin    = $grossRevenue ? round(($estimatedProfit / $grossRevenue) * 100) : 0;
+    // ===== Calculate both =====
+    $todayCost      = $todayRevenue   * $costPercentage;
+    $todayProfit    = $todayRevenue   - $todayCost;
+    $todayMargin    = $todayRevenue   ? round(($todayProfit   / $todayRevenue)   * 100) : 0;
 
-    // ===== Same format as your WhatsApp message =====
-    $message = "📊 *Artisanè Grills Daily Business Report*\n\n";
-    $message .= "💰 *Gross Revenue:* ₦" . number_format($grossRevenue) . "\n";
-    $message .= "📉 *Estimated Cost:* ₦" . number_format($estimatedCost) . "\n";
-    $message .= "📈 *Estimated Profit:* ₦" . number_format($estimatedProfit) . "\n";
-    $message .= "📊 *Profit Margin:* {$profitMargin}%\n\n";
+    $allTimeCost    = $allTimeRevenue * $costPercentage;
+    $allTimeProfit  = $allTimeRevenue - $allTimeCost;
+    $allTimeMargin  = $allTimeRevenue ? round(($allTimeProfit / $allTimeRevenue) * 100) : 0;
+
+    // ===== Build Message =====
+    $date = date("F j, Y");
+
+    $message  = "📊 *Artisanè Grills Business Report*\n";
+    $message .= "🗓 {$date}\n";
+    $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+
+    $message .= "📅 *TODAY'S PERFORMANCE*\n";
+    $message .= "💰 Gross Revenue: ₦" . number_format($todayRevenue) . "\n";
+    $message .= "📉 Estimated Cost: ₦" . number_format($todayCost) . "\n";
+    $message .= "📈 Estimated Profit: ₦" . number_format($todayProfit) . "\n";
+    $message .= "📊 Profit Margin: {$todayMargin}%\n\n";
+
+    $message .= "━━━━━━━━━━━━━━━━━━━━\n\n";
+
+    $message .= "🏆 *ALL-TIME PERFORMANCE*\n";
+    $message .= "💰 Gross Revenue: ₦" . number_format($allTimeRevenue) . "\n";
+    $message .= "📉 Estimated Cost: ₦" . number_format($allTimeCost) . "\n";
+    $message .= "📈 Estimated Profit: ₦" . number_format($allTimeProfit) . "\n";
+    $message .= "📊 Profit Margin: {$allTimeMargin}%\n\n";
+
+    $message .= "━━━━━━━━━━━━━━━━━━━━\n";
     $message .= "🤖 _Generated automatically by Enflow._";
 
     // ===== Send to Telegram =====
