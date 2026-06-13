@@ -13,7 +13,7 @@ require_once $file;
 $costPercentage = 0.65;
 
 try {
-    // ===== Today's Revenue =====
+    // ===== Today's Paid Revenue =====
     $stmt = $conn->prepare("
         SELECT SUM(total_amount) FROM paid_orders
         WHERE status = 'paid' AND DATE(created_at) = CURDATE()
@@ -24,7 +24,7 @@ try {
     $stmt->close();
     $todayRevenue = $todayRevenue ?? 0;
 
-    // ===== All-Time Revenue =====
+    // ===== All-Time Paid Revenue =====
     $stmt = $conn->prepare("
         SELECT SUM(total_amount) FROM paid_orders
         WHERE status = 'paid'
@@ -35,14 +35,24 @@ try {
     $stmt->close();
     $allTimeRevenue = $allTimeRevenue ?? 0;
 
-    // ===== Calculate both =====
-    $todayCost      = $todayRevenue   * $costPercentage;
-    $todayProfit    = $todayRevenue   - $todayCost;
-    $todayMargin    = $todayRevenue   ? round(($todayProfit   / $todayRevenue)   * 100) : 0;
+    // ===== All-Time Total Revenue (every status) =====
+    $stmt = $conn->prepare("
+        SELECT SUM(total_amount) FROM paid_orders
+    ");
+    $stmt->execute();
+    $stmt->bind_result($totalRevenue);
+    $stmt->fetch();
+    $stmt->close();
+    $totalRevenue = $totalRevenue ?? 0;
 
-    $allTimeCost    = $allTimeRevenue * $costPercentage;
-    $allTimeProfit  = $allTimeRevenue - $allTimeCost;
-    $allTimeMargin  = $allTimeRevenue ? round(($allTimeProfit / $allTimeRevenue) * 100) : 0;
+    // ===== Calculate =====
+    $todayCost     = $todayRevenue   * $costPercentage;
+    $todayProfit   = $todayRevenue   - $todayCost;
+    $todayMargin   = $todayRevenue   ? round(($todayProfit   / $todayRevenue)   * 100) : 0;
+
+    $allTimeCost   = $allTimeRevenue * $costPercentage;
+    $allTimeProfit = $allTimeRevenue - $allTimeCost;
+    $allTimeMargin = $allTimeRevenue ? round(($allTimeProfit / $allTimeRevenue) * 100) : 0;
 
     // ===== Build Message =====
     $date = date("F j, Y");
@@ -65,6 +75,8 @@ try {
     $message .= "📈 Estimated Profit: ₦" . number_format($allTimeProfit) . "\n";
     $message .= "📊 Profit Margin: {$allTimeMargin}%\n\n";
 
+    $message .= "━━━━━━━━━━━━━━━━━━━━\n";
+    $message .= "🧾 *Total Revenue (All Time):* ₦" . number_format($totalRevenue) . "\n";
     $message .= "━━━━━━━━━━━━━━━━━━━━\n";
     $message .= "🤖 _Generated automatically by Enflow._";
 
