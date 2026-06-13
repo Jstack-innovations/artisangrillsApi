@@ -47,14 +47,14 @@ while ($row = $res->fetch_assoc()) {
     if (!isset($orders[$id])) {
         $orders[$id] = [
             "info" => [
-                "order_id"      => $row['order_id'],
-                "table_no"      => $row['table_no'],
-                "order_type"    => $row['order_type'],
-                "total_amount"  => $row['total_amount'],
-                "created_at"    => $row['created_at'],
-                "status"        => $row['status'],
-                "plate_order_no"=> $row['plate_order_no'],
-                "order_status"  => $row['order_status']
+                "order_id"       => $row['order_id'],
+                "table_no"       => $row['table_no'],
+                "order_type"     => $row['order_type'],
+                "total_amount"   => $row['total_amount'],
+                "created_at"     => $row['created_at'],
+                "status"         => $row['status'],
+                "plate_order_no" => $row['plate_order_no'],
+                "order_status"   => $row['order_status']
             ],
             "items" => []
         ];
@@ -68,12 +68,12 @@ while ($row = $res->fetch_assoc()) {
 
     if ($row['menu_name']) {
         $orders[$id]['items'][] = [
-            "name"         => $row['menu_name'],
-            "price"        => $row['price'],
-            "qty"          => $row['quantity'],
-            "image"        => $menuImages[$row['menu_id']] ?? "images/default.jpg",
-            "menu_id"      => $row['menu_id'],
-            "order_item_id"=> $row['order_item_id']
+            "name"          => $row['menu_name'],
+            "price"         => $row['price'],
+            "qty"           => $row['quantity'],
+            "image"         => $menuImages[$row['menu_id']] ?? "images/default.jpg",
+            "menu_id"       => $row['menu_id'],
+            "order_item_id" => $row['order_item_id']
         ];
     }
 }
@@ -137,23 +137,25 @@ $lastWeekLunchRevenue = floatval($resLastWeekLunch->fetch_assoc()['total'] ?? 0)
 
 /* ===== TOP ITEM THIS WEEK ===== */
 $sqlTopItem = "
-    SELECT menu_name, SUM(quantity) as total_qty
-    FROM paid_order_items
-    WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
-    GROUP BY menu_name
+    SELECT i.menu_name, SUM(i.quantity) as total_qty
+    FROM paid_order_items i
+    JOIN paid_orders o ON i.paid_order_id = o.id
+    WHERE o.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+    GROUP BY i.menu_name
     ORDER BY total_qty DESC
     LIMIT 1
 ";
-$resTopItem = $conn->query($sqlTopItem);
+$resTopItem  = $conn->query($sqlTopItem);
 $topItemRow  = $resTopItem->fetch_assoc();
 $topItemName = $topItemRow['menu_name'] ?? 'N/A';
 $topItemQty  = intval($topItemRow['total_qty'] ?? 0);
 
 /* ===== TOTAL ITEMS QTY THIS WEEK ===== */
 $sqlTotalQty = "
-    SELECT SUM(quantity) as total
-    FROM paid_order_items
-    WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
+    SELECT SUM(i.quantity) as total
+    FROM paid_order_items i
+    JOIN paid_orders o ON i.paid_order_id = o.id
+    WHERE o.created_at >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)
 ";
 $resTotalQty    = $conn->query($sqlTotalQty);
 $totalQtyWeek   = intval($resTotalQty->fetch_assoc()['total'] ?? 0);
@@ -169,10 +171,10 @@ echo json_encode([
         "totalPickup"    => $totalPickup,
         "totalRevenue"   => $totalRevenue
     ],
-    "dailyRevenue"        => $dailyRevenueOutput,
-    "hourlyRevenue"       => $hourlyRevenueOutput,
-    "todayOrdersCount"    => $todayOrdersCount,
-    "lastWeekLunchRevenue"=> $lastWeekLunchRevenue,
-    "topItemName"         => $topItemName,
-    "topItemPercent"      => $topItemPercent,
+    "dailyRevenue"         => $dailyRevenueOutput,
+    "hourlyRevenue"        => $hourlyRevenueOutput,
+    "todayOrdersCount"     => $todayOrdersCount,
+    "lastWeekLunchRevenue" => $lastWeekLunchRevenue,
+    "topItemName"          => $topItemName,
+    "topItemPercent"       => $topItemPercent,
 ]);
