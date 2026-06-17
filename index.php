@@ -169,6 +169,10 @@ if ($uri === "/sendTelegramReport") {
 /* ADMINS ROUTES */
 
 /*GET ROUTES */
+if ($uri === "/stats") {
+    require $basePath . "/admins/GET/stats.php";
+    exit;
+}
 
 if ($uri === "/admin") {
     require $basePath . "/admins/GET/admins.php";
