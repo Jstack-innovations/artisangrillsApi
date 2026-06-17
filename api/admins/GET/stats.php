@@ -45,15 +45,34 @@ $tablesTotal = 0;
 if (file_exists($tablesFile)) {
     $tablesJson = json_decode(file_get_contents($tablesFile), true);
     $floors = $tablesJson["floors"] ?? [];
-
-    // Count total tables across all floors
     foreach ($floors as $floorTables) {
         $tablesTotal += count($floorTables);
     }
-
-    // Count occupied from booked_tables
     $resBooked = $conn->query("SELECT COUNT(*) as cnt FROM booked_tables WHERE booked = 1");
     $tablesSeated = intval($resBooked->fetch_assoc()['cnt'] ?? 0);
+}
+
+// --- Daily revenue last 7 days ---
+$dailyRevenue = [];
+for ($i = 6; $i >= 0; $i--) {
+    $date = date('Y-m-d', strtotime("-$i days"));
+    $dailyRevenue[$date] = 0;
+}
+
+$sqlDaily = "
+    SELECT DATE(created_at) as order_date, SUM(total_amount) as total
+    FROM paid_orders
+    WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 DAY)
+    GROUP BY DATE(created_at)
+";
+$resDaily = $conn->query($sqlDaily);
+while ($row = $resDaily->fetch_assoc()) {
+    $dailyRevenue[$row['order_date']] = floatval($row['total']);
+}
+
+$dailyRevenueOutput = [];
+foreach ($dailyRevenue as $date => $total) {
+    $dailyRevenueOutput[] = ["day" => date('M j', strtotime($date)), "revenue" => $total];
 }
 
 // --- Output ---
@@ -63,6 +82,7 @@ echo json_encode([
         "orders_today"     => $ordersToday,
         "tables_seated"    => $tablesSeated,
         "tables_total"     => $tablesTotal,
-        "zara_chats_today" => 0
+        "zara_chats_today" => 0,
+        "daily_revenue"    => $dailyRevenueOutput
     ]
 ]);
