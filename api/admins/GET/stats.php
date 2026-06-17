@@ -75,6 +75,27 @@ foreach ($dailyRevenue as $date => $total) {
     $dailyRevenueOutput[] = ["day" => date('M j', strtotime($date)), "revenue" => $total];
 }
 
+// --- Recent orders (last 6) ---
+$sqlRecent = "
+    SELECT id, plate_order_no, table_no, order_type, total_amount, created_at, order_status
+    FROM paid_orders
+    ORDER BY created_at DESC
+    LIMIT 6
+";
+$resRecent = $conn->query($sqlRecent);
+$recentOrders = [];
+while ($row = $resRecent->fetch_assoc()) {
+    $recentOrders[] = [
+        "id"           => $row['id'],
+        "plate_no"     => $row['plate_order_no'],
+        "table_no"     => $row['table_no'],
+        "order_type"   => $row['order_type'],
+        "total_amount" => floatval($row['total_amount']),
+        "created_at"   => $row['created_at'],
+        "order_status" => $row['order_status'],
+    ];
+}
+
 // --- Output ---
 echo json_encode([
     "stats" => [
@@ -83,6 +104,7 @@ echo json_encode([
         "tables_seated"    => $tablesSeated,
         "tables_total"     => $tablesTotal,
         "zara_chats_today" => 0,
-        "daily_revenue"    => $dailyRevenueOutput
+        "daily_revenue"    => $dailyRevenueOutput,
+        "recent_orders"    => $recentOrders
     ]
 ]);
