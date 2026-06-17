@@ -38,13 +38,23 @@ $resOrders = $conn->query($sqlOrders);
 $ordersToday = intval($resOrders->fetch_assoc()['cnt'] ?? 0);
 
 // --- Tables seated ---
-$sqlSeated = "SELECT COUNT(*) as cnt FROM tables WHERE status = 'occupied'";
-$resSeated = $conn->query($sqlSeated);
-$tablesSeated = intval($resSeated->fetch_assoc()['cnt'] ?? 0);
+$tablesFile = __DIR__ . "/../../GET/JSON/tables.json";
+$tablesSeated = 0;
+$tablesTotal = 0;
 
-$sqlTotal = "SELECT COUNT(*) as cnt FROM tables";
-$resTotal = $conn->query($sqlTotal);
-$tablesTotal = intval($resTotal->fetch_assoc()['cnt'] ?? 0);
+if (file_exists($tablesFile)) {
+    $tablesJson = json_decode(file_get_contents($tablesFile), true);
+    $floors = $tablesJson["floors"] ?? [];
+
+    // Count total tables across all floors
+    foreach ($floors as $floorTables) {
+        $tablesTotal += count($floorTables);
+    }
+
+    // Count occupied from booked_tables
+    $resBooked = $conn->query("SELECT COUNT(*) as cnt FROM booked_tables WHERE booked = 1");
+    $tablesSeated = intval($resBooked->fetch_assoc()['cnt'] ?? 0);
+}
 
 // --- Output ---
 echo json_encode([
