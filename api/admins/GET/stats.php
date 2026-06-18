@@ -77,7 +77,7 @@ foreach ($dailyRevenue as $date => $total) {
 
 // --- Recent orders (last 6) ---
 $sqlRecent = "
-    SELECT id, plate_order_no, table_no, order_type, total_amount, created_at, order_status
+    SELECT id, plate_order_no, table_no, order_type, total_amount, created_at, order_status, name, phone
     FROM paid_orders
     ORDER BY created_at DESC
     LIMIT 6
@@ -93,6 +93,8 @@ while ($row = $resRecent->fetch_assoc()) {
         "total_amount" => floatval($row['total_amount']),
         "created_at"   => $row['created_at'],
         "order_status" => $row['order_status'],
+        "name"         => $row['name'],
+        "phone"        => $row['phone'],
     ];
 }
 
