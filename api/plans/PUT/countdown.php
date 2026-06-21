@@ -1,53 +1,26 @@
 <?php
-
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: PUT, OPTIONS");
+header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Content-Type: application/json");
 
-// Read JSON file
-$jsonPath = __DIR__ . "/../GET/JSON/countdown.json";
+if ($_SERVER["REQUEST_METHOD"] === "OPTIONS") { http_response_code(200); exit(); }
 
-if (!file_exists($jsonPath)) {
-    die(json_encode([
-        "status" => "error",
-        "message" => "countdown.json not found",
-        "path_checked" => $jsonPath
-    ]));
-}
+// Call central server with this local server's URL as identifier
+$localUrl = (isset($_SERVER["HTTPS"]) ? "https" : "http") . "://" . $_SERVER["HTTP_HOST"];
 
-$data = json_decode(file_get_contents($jsonPath), true);
+$ch = curl_init("https://enflowsubscriptions-production.up.railway.app/countdown");
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode(["local_server_url" => $localUrl]));
+curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json"]);
+curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+$response = curl_exec($ch);
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+curl_close($ch);
 
-
-$days = $data["free_trial_days"];
-$startDate = $data["start_date"];
-
-// Convert to timestamps
-$startTimestamp = strtotime($startDate);
-$endTimestamp = strtotime("+$days days", $startTimestamp);
-
-$currentTimestamp = time();
-
-$remainingSeconds = $endTimestamp - $currentTimestamp;
-
-if ($remainingSeconds <= 0) {
-    echo json_encode([
-        "status" => "expired",
-        "remaining_days" => 0,
-        "remaining_hours" => 0,
-        "remaining_minutes" => 0
-    ]);
+if (!$response || $httpCode !== 200) {
+    echo json_encode(["status" => "error", "message" => "Could not reach central server"]);
     exit;
 }
 
-$remainingDays = floor($remainingSeconds / 86400);
-$remainingHours = floor(($remainingSeconds % 86400) / 3600);
-$remainingMinutes = floor(($remainingSeconds % 3600) / 60);
-
-echo json_encode([
-    "status" => "active",
-    "remaining_days" => $remainingDays,
-    "remaining_hours" => $remainingHours,
-    "remaining_minutes" => $remainingMinutes
-]);
-
-?>
+echo $response;
