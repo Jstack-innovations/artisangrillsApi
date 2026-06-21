@@ -18,8 +18,17 @@ $response = curl_exec($ch);
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
+//if (!$response || $httpCode !== 200) {
+    //echo json_encode(["status" => "error", "message" => "Could not reach central server"]);
+    //exit;
+//}
 if (!$response || $httpCode !== 200) {
-    echo json_encode(["status" => "error", "message" => "Could not reach central server"]);
+    echo json_encode([
+        "status" => "error", 
+        "message" => "Could not reach central server",
+        "http_code" => $httpCode,
+        "response" => $response
+    ]);
     exit;
 }
 
