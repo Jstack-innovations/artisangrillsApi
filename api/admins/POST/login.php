@@ -3,7 +3,7 @@
 $file = __DIR__ . '/../../SECURE/db.php';
 if (!file_exists($file)) die(json_encode(["error" => "db.php not found"]));
 require_once $file;
-require_once __DIR__ . '/../../SECURE/central.php';
+require_once __DIR__ . '/../../SECURE/centralProxy.php';
 $conn->set_charset("latin1");
 
 $allowedOrigins = [
