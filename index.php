@@ -342,35 +342,17 @@ if ($uri === "/adminDeleteUser") {
 
 /* SUBSCRIPTION PLAN ROUTES */
 /*GET*/
-if ($uri === "/subscriptionContent") {
-    require $basePath . "/plans/GET/CORS/jsonplans.php";
-    exit;
-}
-
-if ($uri === "/settings") {
-    require $basePath . "/plans/GET/CORS/settings.php";
+if ($uri === "/countdown") {
+    require $basePath . "/plans/GET/countdown.php";
     exit;
 }
 
 /*POST*/
-if ($uri === "/subPlans") {
-    require $basePath . "/plans/POST/subPlans.php";
-    exit;
-}
-if ($uri === "/trialSignup") {
-    require $basePath . "/plans/POST/trial-signup.php";
-    exit;
-}
 if ($uri === "/zaraTopup") {
     require $basePath . "/plans/POST/zara-topup.php";
     exit;
 }
 
-/*PUT*/
-if ($uri === "/countdown") {
-    require $basePath . "/plans/PUT/countdown.php";
-    exit;
-}
 
 
 
