@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/../../SECURE/authGuard.php";
+require_once __DIR__ . "/../../SECURE/centralProxy.php";
 
 $adminId = $GLOBALS['admin_id'];
 
@@ -19,11 +20,8 @@ if (!$email) {
 $data   = json_decode(file_get_contents("php://input"), true);
 $amount = (int)($data["credits"] ?? 1);
 
-
 // Proxy to central server
-//$ch = curl_init("https://enflowsubscriptions.onrender.com/deductCredits");
-// Proxy to central server
-$ch = curl_init("https://enflowsubscriptions-production.up.railway.app/deductCredits");
+$ch = curl_init(CENTRAL_SERVER . "/deductCredits");
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
