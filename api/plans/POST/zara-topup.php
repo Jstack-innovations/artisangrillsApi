@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . "/../../SECURE/authGuard.php";
+require_once __DIR__ . "/../../SECURE/centralProxy.php";
 
 $adminId = $GLOBALS['admin_id'];
 
@@ -19,8 +20,7 @@ $raw  = file_get_contents("php://input");
 $data = json_decode($raw, true) ?? [];
 $data["email"] = $email;
 
-//$ch = curl_init("https://enflowsubscriptions.onrender.com/zaraTopup");
-$ch = curl_init("https://enflowsubscriptions-production.up.railway.app/zaraTopup");
+$ch = curl_init(CENTRAL_SERVER . "/zaraTopup");
 curl_setopt_array($ch, [
     CURLOPT_RETURNTRANSFER => true,
     CURLOPT_POST           => true,
